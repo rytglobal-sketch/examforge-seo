@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ExamForge SEO",
+  title: "ExamForge",
   description:
-    "SEO landing pages for ExamForge, the AI exam generator for PDFs, notes, and study material.",
+    "Landing pages for ExamForge, the AI exam generator for PDFs, notes, and study material.",
 };
 
 export default function RootLayout({
@@ -28,7 +28,9 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="flex min-h-full flex-col bg-[#070913] text-white">
+        {children}
+      </body>
     </html>
   );
 }
