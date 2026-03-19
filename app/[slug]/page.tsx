@@ -98,6 +98,7 @@ export default async function SeoPage({ params }: PageProps) {
 
       <a
         href="https://examforge.academy"
+        target="_blank"
         className="inline-block rounded-xl px-6 py-3 font-medium border"
       >
         Start generating your exam
