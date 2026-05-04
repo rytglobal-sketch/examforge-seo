@@ -13,9 +13,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ExamForge",
+  metadataBase: new URL("https://examforge.academy"),
+  title: {
+    default: "ExamForge Research Copilot",
+    template: "%s | ExamForge",
+  },
   description:
-    "Landing pages for ExamForge, the AI exam generator for PDFs, notes, and study material.",
+    "Research-focused AI workspace for semantic search, PDF chat, literature reviews, academic writing, and citation-backed workflows.",
 };
 
 export default function RootLayout({
@@ -28,9 +32,7 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col bg-[#070913] text-white">
-        {children}
-      </body>
+      <body className="min-h-full bg-background text-foreground">{children}</body>
     </html>
   );
 }

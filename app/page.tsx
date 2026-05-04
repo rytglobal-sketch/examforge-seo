@@ -1,201 +1,381 @@
-import Link from "next/link";
 import type { Metadata } from "next";
-import { seoPages } from "@/lib/seo-pages";
+import { workspaceHref } from "@/lib/app-navigation";
 
 export const metadata: Metadata = {
-  title: "ExamForge | AI Exam Generator",
+  title: "Research Workspace",
   description:
-    "Generate exam questions, answer keys, and mock exams from PDFs, notes, and study material with ExamForge.",
+    "A centered research task builder for literature reviews, PDF chat, writing, citations, and academic outputs.",
 };
 
-const highlights = [
-  "Structured exam questions from notes, slides, and PDFs",
-  "Answer keys, mock exams, and timed practice in one flow",
-  "Fast landing pages for high-intent course and study use cases",
+type TaskItem = {
+  label: string;
+  href: string;
+  accent: string;
+  textColor: string;
+  symbol: string;
+};
+
+type TaskColumn = {
+  title: string;
+  items: TaskItem[];
+};
+
+const taskColumns: TaskColumn[] = [
+  {
+    title: "I WANT TO",
+    items: [
+      {
+        label: "Review Literature",
+        href: "/literature-review",
+        accent: "bg-[#edf1ff]",
+        textColor: "text-[#2f61ff]",
+        symbol: "RL",
+      },
+      {
+        label: "Write a Draft",
+        href: "/ai-writer",
+        accent: "bg-[#fff0ef]",
+        textColor: "text-[#e32a26]",
+        symbol: "WD",
+      },
+      {
+        label: "Generate Diagram",
+        href: "/agent-gallery",
+        accent: "bg-[#eef3ff]",
+        textColor: "text-[#2b67ff]",
+        symbol: "GD",
+      },
+      {
+        label: "Systematic Review",
+        href: "/literature-review",
+        accent: "bg-[#eefbf0]",
+        textColor: "text-[#1c9c47]",
+        symbol: "SR",
+      },
+      {
+        label: "Search Papers",
+        href: "/find-topics",
+        accent: "bg-[#fff1f7]",
+        textColor: "text-[#ef0b78]",
+        symbol: "SP",
+      },
+      {
+        label: "Extract Data",
+        href: "/extract-data",
+        accent: "bg-[#edf9ef]",
+        textColor: "text-[#17a84f]",
+        symbol: "ED",
+      },
+      {
+        label: "Review my Writing",
+        href: "/ai-detector",
+        accent: "bg-[#fff1ef]",
+        textColor: "text-[#ff241e]",
+        symbol: "RW",
+      },
+      {
+        label: "Write a Report",
+        href: "/ai-writer",
+        accent: "bg-[#fff0f0]",
+        textColor: "text-[#df1d24]",
+        symbol: "WR",
+      },
+    ],
+  },
+  {
+    title: "USE",
+    items: [
+      {
+        label: "Deep Research",
+        href: "/agent-gallery",
+        accent: "bg-[#eef8ff]",
+        textColor: "text-[#2f78ff]",
+        symbol: "DR",
+      },
+      {
+        label: "Zotero Library",
+        href: "https://www.zotero.org",
+        accent: "bg-[#fff0fb]",
+        textColor: "text-[#eb4ea4]",
+        symbol: "Z",
+      },
+      {
+        label: "Mendeley Library",
+        href: "https://www.mendeley.com",
+        accent: "bg-[#fff0f2]",
+        textColor: "text-[#b71c29]",
+        symbol: "M",
+      },
+      {
+        label: "Pubmed",
+        href: "https://pubmed.ncbi.nlm.nih.gov",
+        accent: "bg-[#f3f7ff]",
+        textColor: "text-[#5c6985]",
+        symbol: "P",
+      },
+      {
+        label: "Google Scholar",
+        href: "https://scholar.google.com",
+        accent: "bg-[#eef5ff]",
+        textColor: "text-[#5685eb]",
+        symbol: "GS",
+      },
+      {
+        label: "ArXiV",
+        href: "https://arxiv.org",
+        accent: "bg-[#fff1f1]",
+        textColor: "text-[#d34747]",
+        symbol: "A",
+      },
+      {
+        label: "Python Library",
+        href: "https://www.python.org",
+        accent: "bg-[#fff8e9]",
+        textColor: "text-[#f2b41b]",
+        symbol: "Py",
+      },
+      {
+        label: "Grants.gov",
+        href: "https://www.grants.gov",
+        accent: "bg-[#eef5ff]",
+        textColor: "text-[#0853a3]",
+        symbol: "G",
+      },
+    ],
+  },
+  {
+    title: "MAKE A",
+    items: [
+      {
+        label: "Word document",
+        href: workspaceHref,
+        accent: "bg-[#eef2ff]",
+        textColor: "text-[#245cd4]",
+        symbol: "W",
+      },
+      {
+        label: "PPT presentation",
+        href: workspaceHref,
+        accent: "bg-[#fff2ec]",
+        textColor: "text-[#f26a2e]",
+        symbol: "P",
+      },
+      {
+        label: "LaTeX Manuscript",
+        href: workspaceHref,
+        accent: "bg-[#f3f3f3]",
+        textColor: "text-[#292929]",
+        symbol: "Tx",
+      },
+      {
+        label: "LaTeX Poster",
+        href: workspaceHref,
+        accent: "bg-[#fff0f1]",
+        textColor: "text-[#f20d1d]",
+        symbol: "LP",
+      },
+      {
+        label: "Data Visualization",
+        href: workspaceHref,
+        accent: "bg-[#eef4ff]",
+        textColor: "text-[#2f78ff]",
+        symbol: "DV",
+      },
+      {
+        label: "PDF Report",
+        href: workspaceHref,
+        accent: "bg-[#fff1f1]",
+        textColor: "text-[#ff2c23]",
+        symbol: "PDF",
+      },
+      {
+        label: "Website",
+        href: workspaceHref,
+        accent: "bg-[#eef4ff]",
+        textColor: "text-[#2460ff]",
+        symbol: "WB",
+      },
+      {
+        label: "Infographic",
+        href: workspaceHref,
+        accent: "bg-[#eefbf0]",
+        textColor: "text-[#17a84f]",
+        symbol: "I",
+      },
+    ],
+  },
 ];
 
-const navItems = [
-  { href: "#how-it-works", label: "How it works" },
-  { href: "#features", label: "Features" },
-  { href: "#pages", label: "Pages" },
-];
+function isExternalHref(href: string) {
+  return href.startsWith("http://") || href.startsWith("https://");
+}
 
-export default function Home() {
-  const samplePageHref = seoPages[0] ? `/${seoPages[0].slug}` : "/";
+function TaskBadge({
+  accent,
+  textColor,
+  symbol,
+}: Pick<TaskItem, "accent" | "textColor" | "symbol">) {
+  return (
+    <span
+      className={`inline-flex h-6 min-w-6 items-center justify-center rounded-md px-1.5 text-[0.64rem] font-semibold tracking-[-0.01em] ${accent} ${textColor}`}
+    >
+      {symbol}
+    </span>
+  );
+}
+
+function TaskTile({ item }: { item: TaskItem }) {
+  const external = isExternalHref(item.href);
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#070913] text-white">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(124,58,237,0.22),transparent_30%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.16),transparent_24%),radial-gradient(circle_at_bottom_left,rgba(99,102,241,0.16),transparent_28%)]" />
-      <div className="pointer-events-none absolute inset-0 opacity-40 [background-image:linear-gradient(rgba(129,140,248,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(129,140,248,0.08)_1px,transparent_1px)] [background-size:88px_88px]" />
+    <a
+      href={item.href}
+      target={external ? "_blank" : undefined}
+      rel={external ? "noopener noreferrer" : undefined}
+      className="flex items-center gap-3 rounded-xl border border-[#ddd8d0] bg-white px-4 py-3 text-[0.98rem] text-[#121212] shadow-[0_4px_12px_rgba(120,104,80,0.04)] transition-transform hover:-translate-y-0.5"
+    >
+      <TaskBadge
+        accent={item.accent}
+        textColor={item.textColor}
+        symbol={item.symbol}
+      />
+      <span>{item.label}</span>
+    </a>
+  );
+}
 
-      <div className="relative mx-auto flex min-h-screen w-full max-w-7xl flex-col px-6 pb-16 pt-6 sm:px-10 lg:px-12">
-        <header className="sticky top-4 z-20 rounded-full border border-white/10 bg-white/5 px-5 py-3 backdrop-blur-xl">
-          <div className="flex items-center justify-between gap-6">
-            <Link href="/" className="flex items-center gap-3 text-white">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 via-indigo-500 to-cyan-400 text-sm font-bold shadow-[0_0_30px_rgba(99,102,241,0.45)]">
-                EF
-              </span>
-              <span className="text-xl font-semibold tracking-tight">
-                ExamForge
-              </span>
-            </Link>
+function TaskColumnCard({ column }: { column: TaskColumn }) {
+  return (
+    <section className="rounded-[1.45rem] bg-[#f6f4ef] p-4 shadow-[0_12px_32px_rgba(120,104,80,0.06)] sm:p-5">
+      <h2 className="text-[0.96rem] font-semibold tracking-[0.02em] text-[#181818]">
+        {column.title}
+      </h2>
 
-            <nav className="hidden items-center gap-8 text-sm text-white/70 md:flex">
-              {navItems.map((item) => (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  className="hover:text-white"
-                >
-                  {item.label}
-                </a>
-              ))}
-            </nav>
+      <div className="mt-3 space-y-3">
+        {column.items.map((item) => (
+          <TaskTile key={`${column.title}-${item.label}`} item={item} />
+        ))}
+      </div>
 
-            <a
-              href="https://examforge.academy"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center rounded-full bg-gradient-to-r from-violet-600 to-indigo-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_12px_40px_-18px_rgba(99,102,241,0.85)] transition-transform hover:-translate-y-0.5"
+      <button
+        type="button"
+        className="mt-4 w-full rounded-xl px-3 py-2 text-[0.98rem] text-[#131313] transition-colors hover:bg-white/70"
+      >
+        Show More
+      </button>
+    </section>
+  );
+}
+
+function PromptComposer() {
+  return (
+    <section className="rounded-[1.55rem] border border-[#ddd8d0] bg-white px-4 pb-3 pt-4 shadow-[0_24px_54px_rgba(132,112,85,0.1)] sm:px-5 sm:pb-4">
+      <textarea
+        aria-label="Research prompt"
+        placeholder="Give me any task to work on..."
+        className="min-h-[104px] w-full resize-none bg-transparent px-2 py-1 text-[1.02rem] leading-7 text-[#212121] outline-none placeholder:text-[#8d7f72]"
+      />
+
+      <div className="flex items-center justify-between gap-3 border-t border-[#ebe5dc] pt-3">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            aria-label="Add tool"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#d7d0c6] bg-white text-[1.45rem] leading-none text-[#56504b]"
+          >
+            +
+          </button>
+
+          <button
+            type="button"
+            className="inline-flex items-center gap-1 text-[0.98rem] font-semibold text-[#171717]"
+          >
+            Tools
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="1.8"
+              className="h-3.5 w-3.5 text-[#a4998d]"
             >
-              Get started
-            </a>
-          </div>
+              <path d="m6 9 6 6 6-6" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            aria-label="Use microphone"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[#544d47] transition-colors hover:bg-[#f5f1eb]"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="1.8"
+              className="h-4 w-4"
+            >
+              <path d="M12 4.5a2.5 2.5 0 0 1 2.5 2.5v4.5a2.5 2.5 0 0 1-5 0V7A2.5 2.5 0 0 1 12 4.5Z" />
+              <path d="M7.5 10.5a4.5 4.5 0 0 0 9 0" />
+              <path d="M12 15v4.5" />
+              <path d="M9 19.5h6" />
+            </svg>
+          </button>
+
+          <a
+            href={workspaceHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Open workspace"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[#bdb5ae] text-white transition-colors hover:bg-[#aaa198]"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              className="h-3.5 w-3.5"
+            >
+              <path d="M12 17V7" />
+              <path d="m7 12 5-5 5 5" />
+            </svg>
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <main className="min-h-screen bg-background px-4 py-10 text-foreground sm:px-6 sm:py-14">
+      <div className="mx-auto max-w-[980px]">
+        <header className="text-center">
+          <h1 className="text-[2.3rem] font-semibold tracking-[-0.06em] text-[#0f0d0b] sm:text-[3.15rem]">
+            How can I help with your research?
+          </h1>
         </header>
 
-        <section className="flex flex-1 flex-col items-center justify-center pb-12 pt-20 text-center">
-          <div className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/6 px-5 py-3 text-sm text-white/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur">
-            <div className="flex -space-x-2">
-              {["TK", "KS", "RL", "AN", "JP"].map((label, index) => (
-                <span
-                  key={label}
-                  className={`flex h-8 w-8 items-center justify-center rounded-full border border-[#070913] text-[10px] font-semibold ${
-                    [
-                      "bg-violet-500",
-                      "bg-blue-500",
-                      "bg-emerald-500",
-                      "bg-orange-500",
-                      "bg-pink-500",
-                    ][index]
-                  }`}
-                >
-                  {label}
-                </span>
-              ))}
-            </div>
-            <span>
-              <strong className="text-white">4,933+</strong> students studying
-              right now
-            </span>
-            <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
-          </div>
+        <div className="mx-auto mt-8 max-w-[740px]">
+          <PromptComposer />
+        </div>
 
-          <h1 className="mt-10 max-w-5xl text-5xl font-semibold leading-[0.94] tracking-tight sm:text-7xl lg:text-[6rem]">
-            Your notes.
-            <span className="bg-gradient-to-r from-violet-400 via-indigo-400 to-fuchsia-400 bg-clip-text text-transparent">
-              {" "}
-              Exam-ready{" "}
-            </span>
-            in 30 seconds.
-          </h1>
+        <p className="mt-8 text-center text-[1.04rem] text-[#7b6e62]">
+          Build your task
+        </p>
 
-          <p className="mt-8 max-w-3xl text-lg leading-9 text-white/60 sm:text-2xl">
-            Upload your lecture notes or slides. ExamForge generates structured
-            exam questions, step-by-step solutions, and timed mock exams built
-            from your exact course material.
-          </p>
-
-          <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row">
-            <a
-              href="https://examforge.academy"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex min-w-[20rem] items-center justify-center rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-500 px-8 py-5 text-lg font-semibold text-white shadow-[0_22px_55px_-22px_rgba(99,102,241,0.9)] transition-transform hover:-translate-y-0.5"
-            >
-              Generate your first exam free
-            </a>
-            <Link
-              href={samplePageHref}
-              className="inline-flex min-w-[12rem] items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-8 py-5 text-lg font-semibold text-white/90 backdrop-blur transition-colors hover:bg-white/10"
-            >
-              View sample page
-            </Link>
-          </div>
-
-          <p className="mt-6 text-sm text-white/40">
-            No credit card required. Built for students, tutors, and educators.
-          </p>
-        </section>
-
-        <section
-          id="how-it-works"
-          className="grid gap-5 border-t border-white/10 pt-12 md:grid-cols-3"
-        >
-          {highlights.map((item, index) => (
-            <article
-              key={item}
-              className="rounded-[1.75rem] border border-white/10 bg-white/6 p-6 backdrop-blur-xl"
-            >
-              <span className="text-sm font-medium text-violet-300">
-                0{index + 1}
-              </span>
-              <p className="mt-4 text-xl font-semibold tracking-tight text-white">
-                {item}
-              </p>
-            </article>
+        <div className="mt-6 grid gap-5 md:grid-cols-3">
+          {taskColumns.map((column) => (
+            <TaskColumnCard key={column.title} column={column} />
           ))}
-        </section>
-
-        <section
-          id="features"
-          className="mt-14 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]"
-        >
-          <article className="rounded-[2rem] border border-white/10 bg-white/6 p-8 backdrop-blur-xl">
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-violet-300">
-              Why it works
-            </p>
-            <h2 className="mt-5 max-w-2xl text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-              A product-style landing experience, backed by routes you can
-              scale.
-            </h2>
-            <p className="mt-5 max-w-2xl text-lg leading-8 text-white/65">
-              Each page can target a specific input type, subject, or student
-              need while keeping the same premium ExamForge visual system.
-            </p>
-          </article>
-
-          <article
-            id="pages"
-            className="rounded-[2rem] border border-white/10 bg-[#0f1220]/90 p-6 shadow-[0_30px_80px_-35px_rgba(79,70,229,0.6)]"
-          >
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-cyan-300">
-              Active Pages
-            </p>
-            <div className="mt-5 space-y-4">
-              {seoPages.map((page) => (
-                <div
-                  key={page.slug}
-                  className="rounded-2xl border border-white/10 bg-white/5 p-4"
-                >
-                  <div className="flex items-center justify-between gap-4">
-                    <p className="text-sm font-medium uppercase tracking-[0.16em] text-white/45">
-                      {page.pageType}
-                    </p>
-                    <span className="rounded-full bg-white/8 px-3 py-1 text-xs text-white/60">
-                      /{page.slug}
-                    </span>
-                  </div>
-                  <h3 className="mt-3 text-xl font-semibold text-white">
-                    {page.h1}
-                  </h3>
-                  <p className="mt-2 text-sm leading-6 text-white/60">
-                    {page.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </article>
-        </section>
+        </div>
       </div>
     </main>
   );
