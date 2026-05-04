@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     template: "%s | ResearchForge",
   },
   description:
-    "ResearchForge is an AI research assistant for thesis students to find research gaps, summarize papers, and organize thesis sources faster.",
+    "ResearchForge is an AI PDF research assistant for students to upload papers, ask questions, get simple explanations, generate summaries, create notes, and find citations.",
 };
 
 export default function RootLayout({

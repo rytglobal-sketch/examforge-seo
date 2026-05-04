@@ -12,13 +12,12 @@ export default function AuthLayout({
           <section className="hidden lg:block">
             <ResearchForgeLogo />
             <h1 className="mt-8 max-w-[12ch] text-5xl font-semibold tracking-[-0.06em] text-[#101522]">
-              Research AI that stays tied to the paper.
+              Ask better questions of the papers you upload.
             </h1>
             <p className="mt-5 max-w-[34rem] text-lg leading-8 text-[#57637a]">
-              Upload academic PDFs, extract page-based chunks, generate
-              embeddings, and ask grounded questions with page citations. Use the
-              same workspace for literature search, citation support, notes, and
-              billing.
+              Upload academic PDFs, ask questions, get simple explanations,
+              generate summaries, create notes, and find citations from the same
+              workspace.
             </p>
           </section>
 

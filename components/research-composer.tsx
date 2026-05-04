@@ -7,24 +7,24 @@ type ResearchComposerProps = {
 export function ResearchComposer({
   placeholder,
   className = "",
-  textareaMinHeightClassName = "min-h-[104px]",
+  textareaMinHeightClassName = "min-h-[120px]",
 }: ResearchComposerProps) {
   return (
     <section
-      className={`rounded-[1.55rem] border border-[#dce4f2] bg-white px-4 pb-3 pt-4 shadow-[0_24px_54px_rgba(16,21,34,0.08)] sm:px-5 sm:pb-4 ${className}`}
+      className={`rounded-[1.55rem] border border-[#ddd8d0] bg-white px-4 pb-3 pt-4 shadow-[0_24px_54px_rgba(132,112,85,0.1)] sm:px-5 sm:pb-4 ${className}`}
     >
       <textarea
         aria-label="Research prompt"
         placeholder={placeholder}
-        className={`${textareaMinHeightClassName} w-full resize-none bg-transparent px-2 py-1 text-[1.02rem] leading-7 text-[#212121] outline-none placeholder:text-[#8a95a8]`}
+        className={`${textareaMinHeightClassName} w-full resize-none bg-transparent px-2 py-1 text-[1.02rem] leading-7 text-[#212121] outline-none placeholder:text-[#8d7f72]`}
       />
 
-      <div className="flex items-center justify-between gap-3 border-t border-[#e7edf5] pt-3">
+      <div className="flex items-center justify-between gap-3 border-t border-[#ebe5dc] pt-3">
         <div className="flex items-center gap-3">
           <button
             type="button"
             aria-label="Add tool"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#dce4f2] bg-white text-[1.45rem] leading-none text-[#565f74]"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#d7d0c6] bg-white text-[1.45rem] leading-none text-[#56504b]"
           >
             +
           </button>
@@ -41,7 +41,7 @@ export function ResearchComposer({
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth="1.8"
-              className="h-3.5 w-3.5 text-[#8a95a8]"
+              className="h-3.5 w-3.5 text-[#a4998d]"
             >
               <path d="m6 9 6 6 6-6" />
             </svg>
@@ -52,7 +52,7 @@ export function ResearchComposer({
           <button
             type="button"
             aria-label="Use microphone"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[#556277] transition-colors hover:bg-[#f5f8fc]"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[#544d47] transition-colors hover:bg-[#f5f1eb]"
           >
             <svg
               viewBox="0 0 24 24"
@@ -73,7 +73,7 @@ export function ResearchComposer({
           <button
             type="button"
             aria-label="Send prompt"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[#1f6fff] text-white transition-colors hover:bg-[#195de0]"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[#bdb5ae] text-white transition-colors hover:bg-[#aaa198]"
           >
             <svg
               viewBox="0 0 24 24"

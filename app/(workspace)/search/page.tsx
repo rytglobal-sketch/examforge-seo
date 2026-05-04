@@ -47,7 +47,7 @@ function ResultCard({
     <article className="rounded-[1.6rem] border border-[#dce4f2] bg-white p-5 shadow-[0_20px_40px_rgba(16,21,34,0.04)]">
       <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#7d8798]">
         <span>{year}</span>
-        <span>·</span>
+        <span>&middot;</span>
         <span>{venue}</span>
       </div>
       <h3 className="mt-3 text-xl font-semibold tracking-[-0.04em] text-[#111727]">
@@ -95,11 +95,11 @@ export default async function SearchPage({
               Literature search
             </p>
             <h2 className="mt-2 text-2xl font-semibold tracking-[-0.05em] text-[#111727]">
-              Search external research databases
+              Find papers and citation leads
             </h2>
             <p className="mt-3 text-sm leading-7 text-[#6d7686]">
               Use OpenAlex, Semantic Scholar, or Crossref to find relevant papers
-              for a research topic or question.
+              for a topic, question, or citation need.
             </p>
 
             <form className="mt-5 space-y-4">
@@ -147,11 +147,11 @@ export default async function SearchPage({
               Citation helper
             </p>
             <h2 className="mt-2 text-2xl font-semibold tracking-[-0.05em] text-[#111727]">
-              Turn a research claim into supporting sources
+              Turn a claim into papers you can cite
             </h2>
             <p className="mt-3 text-sm leading-7 text-[#6d7686]">
               Type a claim from your draft and ResearchForge suggests a tighter
-              search query plus candidate papers to review before citing.
+              search query plus candidate papers to review before you cite them.
             </p>
 
             <form className="mt-5 space-y-4">

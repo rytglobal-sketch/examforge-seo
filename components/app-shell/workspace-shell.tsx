@@ -13,17 +13,17 @@ const navigationItems = [
   {
     href: "/documents",
     label: "Documents",
-    description: "Upload, summarize, and chat with your PDFs",
+    description: "Upload papers, ask questions, and generate summaries",
   },
   {
     href: "/search",
     label: "Search",
-    description: "Search literature and support research claims",
+    description: "Search literature and find papers worth citing",
   },
   {
     href: "/notes",
     label: "Notes",
-    description: "Keep document notes and working thoughts together",
+    description: "Keep notes and organize your source material",
   },
   {
     href: "/billing",
@@ -122,19 +122,19 @@ export function WorkspaceShell({
                   Research workspace
                 </p>
                 <h1 className="mt-1 text-2xl font-semibold tracking-[-0.05em] text-[#111727]">
-                  Build trustworthy answers from your own papers
+                  Ask questions and get clear answers from your PDFs
                 </h1>
               </div>
 
               <div className="flex flex-wrap gap-3 text-sm text-[#5d697d]">
                 <div className="rounded-full border border-[#dce4f2] bg-white px-4 py-2">
-                  PDF chat with citations
+                  Upload papers
                 </div>
                 <div className="rounded-full border border-[#dce4f2] bg-white px-4 py-2">
-                  Literature search
+                  Simple explanations
                 </div>
                 <div className="rounded-full border border-[#dce4f2] bg-white px-4 py-2">
-                  Free + Pro billing
+                  Notes + citations
                 </div>
               </div>
             </div>
