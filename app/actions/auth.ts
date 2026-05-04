@@ -1,35 +1,74 @@
 "use server";
 
-import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { createSession, destroySession } from "@/lib/auth/session";
-import { createUserRecord, findUserByEmail } from "@/lib/db/queries";
+import { issueMagicLink } from "@/lib/auth/magic-links";
+import { destroySession } from "@/lib/auth/session";
+import { findUserByEmail } from "@/lib/db/queries";
 import { isDatabaseConfigured } from "@/lib/env";
 
 export type AuthFormState = {
   error?: string;
+  success?: string;
+  email?: string;
+  magicLink?: string;
   fieldErrors?: {
     name?: string[];
     email?: string[];
-    password?: string[];
   };
 };
 
-const signInSchema = z.object({
-  email: z.string().email("Enter a valid academic or personal email."),
-  password: z.string().min(1, "Enter your password."),
+const emailSchema = z.object({
+  email: z.string().trim().email("Enter a valid academic or personal email."),
 });
 
-const signUpSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters."),
-  email: z.string().email("Enter a valid email address."),
-  password: z
-    .string()
-    .min(8, "Password must be at least 8 characters.")
-    .regex(/[A-Za-z]/, "Password must include a letter.")
-    .regex(/[0-9]/, "Password must include a number."),
+const signInSchema = emailSchema;
+
+const signUpSchema = emailSchema.extend({
+  name: z.string().trim().min(2, "Name must be at least 2 characters."),
 });
+
+async function sendMagicLink(input: {
+  mode: "sign-in" | "sign-up";
+  email: string;
+  name?: string;
+}) {
+  if (isDatabaseConfigured()) {
+    const existingUser = await findUserByEmail(input.email);
+
+    if (input.mode === "sign-in" && !existingUser) {
+      return {
+        error: "No account matched that email. Create one first to use magic links.",
+      } satisfies AuthFormState;
+    }
+
+    if (input.mode === "sign-up" && existingUser) {
+      return {
+        error: "An account with that email already exists. Try signing in instead.",
+      } satisfies AuthFormState;
+    }
+  }
+
+  const result = await issueMagicLink({
+    email: input.email,
+    name: input.name,
+    intent: input.mode,
+  });
+
+  if (!result.ok) {
+    return {
+      error: result.error,
+    } satisfies AuthFormState;
+  }
+
+  return {
+    email: result.email,
+    magicLink: result.magicLink,
+    success: result.preview
+      ? `Magic link preview ready. Open the link below within ${result.expiresInMinutes} minutes.`
+      : `Check ${result.email} for your secure ResearchForge link. It expires in ${result.expiresInMinutes} minutes.`,
+  } satisfies AuthFormState;
+}
 
 export async function signInAction(
   _previousState: AuthFormState | undefined,
@@ -37,7 +76,6 @@ export async function signInAction(
 ) {
   const validated = signInSchema.safeParse({
     email: formData.get("email"),
-    password: formData.get("password"),
   });
 
   if (!validated.success) {
@@ -46,46 +84,10 @@ export async function signInAction(
     } satisfies AuthFormState;
   }
 
-  const { email, password } = validated.data;
-
-  if (!isDatabaseConfigured()) {
-    await createSession({
-      id: "demo-user",
-      name: email.split("@")[0] || "Researcher",
-      email,
-      plan: "free",
-      isDemo: true,
-    });
-
-    redirect("/documents");
-  }
-
-  const existingUser = await findUserByEmail(email);
-
-  if (!existingUser) {
-    return {
-      error: "No account matched that email. Try signing up instead.",
-    } satisfies AuthFormState;
-  }
-
-  const passwordMatches = await bcrypt.compare(password, existingUser.passwordHash);
-
-  if (!passwordMatches) {
-    return {
-      error: "That password was incorrect.",
-    } satisfies AuthFormState;
-  }
-
-  await createSession({
-    id: existingUser.id,
-    name: existingUser.name,
-    email: existingUser.email,
-    plan: existingUser.plan,
-    stripeCustomerId: existingUser.stripeCustomerId,
-    subscriptionStatus: existingUser.subscriptionStatus,
+  return sendMagicLink({
+    mode: "sign-in",
+    email: validated.data.email,
   });
-
-  redirect("/documents");
 }
 
 export async function signUpAction(
@@ -95,7 +97,6 @@ export async function signUpAction(
   const validated = signUpSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
-    password: formData.get("password"),
   });
 
   if (!validated.success) {
@@ -104,37 +105,11 @@ export async function signUpAction(
     } satisfies AuthFormState;
   }
 
-  const { name, email, password } = validated.data;
-
-  if (!isDatabaseConfigured()) {
-    await createSession({
-      id: "demo-user",
-      name,
-      email,
-      plan: "free",
-      isDemo: true,
-    });
-
-    redirect("/documents");
-  }
-
-  const existingUser = await findUserByEmail(email);
-
-  if (existingUser) {
-    return {
-      error: "An account with that email already exists.",
-    } satisfies AuthFormState;
-  }
-
-  const passwordHash = await bcrypt.hash(password, 12);
-  const newUser = await createUserRecord({
-    name,
-    email,
-    passwordHash,
+  return sendMagicLink({
+    mode: "sign-up",
+    name: validated.data.name,
+    email: validated.data.email,
   });
-
-  await createSession(newUser);
-  redirect("/documents");
 }
 
 export async function signOutAction() {

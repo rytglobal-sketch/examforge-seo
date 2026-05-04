@@ -8,6 +8,14 @@ export function isDatabaseConfigured() {
   return Boolean(process.env.DATABASE_URL);
 }
 
+export function isMagicLinkEmailConfigured() {
+  return Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM);
+}
+
+export function canPreviewMagicLinks() {
+  return process.env.NODE_ENV !== "production";
+}
+
 export function isOpenAIConfigured() {
   return Boolean(process.env.OPENAI_API_KEY);
 }

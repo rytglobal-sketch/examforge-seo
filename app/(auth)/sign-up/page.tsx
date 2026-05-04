@@ -25,7 +25,8 @@ export default async function SignUpPage() {
       </h2>
       <p className="mt-3 text-sm leading-7 text-[#6d7686]">
         Upload papers, chat with PDFs using only retrieved context, generate
-        summaries, and grow into Pro when you need more capacity.
+        summaries, and grow into Pro when you need more capacity. No password
+        required.
       </p>
 
       <div className="mt-8">

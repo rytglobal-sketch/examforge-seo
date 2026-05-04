@@ -6,6 +6,8 @@ export type MessageRole = "user" | "assistant";
 
 export type LiteratureProvider = "openalex" | "semantic-scholar" | "crossref";
 
+export type AuthMode = "sign-in" | "sign-up";
+
 export type SummaryDefinition = {
   term: string;
   meaning: string;

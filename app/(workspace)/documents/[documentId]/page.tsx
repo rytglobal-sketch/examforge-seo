@@ -9,13 +9,31 @@ export const metadata: Metadata = {
   title: "Document Workspace",
 };
 
+function getParam(
+  params: Record<string, string | string[] | undefined>,
+  key: string,
+) {
+  const value = params[key];
+
+  if (Array.isArray(value)) {
+    return value[0] ?? "";
+  }
+
+  return value ?? "";
+}
+
 export default async function DocumentWorkspacePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ documentId: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const session = await requireSession();
   const { documentId } = await params;
+  const resolvedSearchParams = await searchParams;
+  const initialPrompt = getParam(resolvedSearchParams, "prompt");
+  const requestedTab = getParam(resolvedSearchParams, "tab");
   const workspace = await getDocumentWorkspace(session.id, documentId);
 
   if (!workspace) {
@@ -37,7 +55,13 @@ export default async function DocumentWorkspacePage({
         </p>
       </div>
 
-      <DocumentWorkspaceView workspace={workspace} />
+      <DocumentWorkspaceView
+        workspace={workspace}
+        initialPrompt={initialPrompt}
+        initialTab={
+          requestedTab === "summary" || requestedTab === "notes" ? requestedTab : "chat"
+        }
+      />
     </WorkspaceShell>
   );
 }

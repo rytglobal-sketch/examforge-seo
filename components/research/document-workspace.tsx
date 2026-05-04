@@ -9,6 +9,8 @@ import type { ChatMessageRecord, DocumentWorkspace } from "@/lib/db/types";
 
 type DocumentWorkspaceProps = {
   workspace: DocumentWorkspace;
+  initialPrompt?: string;
+  initialTab?: "chat" | "summary" | "notes";
 };
 
 function CitationList({ citations }: { citations: number[] }) {
@@ -179,10 +181,14 @@ function NotesPanel({
   );
 }
 
-export function DocumentWorkspaceView({ workspace }: DocumentWorkspaceProps) {
-  const [activeTab, setActiveTab] = useState<"chat" | "summary" | "notes">("chat");
+export function DocumentWorkspaceView({
+  workspace,
+  initialPrompt = "",
+  initialTab = "chat",
+}: DocumentWorkspaceProps) {
+  const [activeTab, setActiveTab] = useState<"chat" | "summary" | "notes">(initialTab);
   const [messages, setMessages] = useState(workspace.messages);
-  const [prompt, setPrompt] = useState("");
+  const [prompt, setPrompt] = useState(initialPrompt);
   const [noteBody, setNoteBody] = useState(workspace.note?.body ?? "");
   const [isSending, startSending] = useTransition();
   const [supportingQuotes, setSupportingQuotes] = useState<string[]>([]);
@@ -263,6 +269,11 @@ export function DocumentWorkspaceView({ workspace }: DocumentWorkspaceProps) {
                   Answers are restricted to retrieved chunks from this PDF. If the
                   information is missing, ResearchForge will say so.
                 </p>
+                {initialPrompt ? (
+                  <p className="mt-2 text-sm text-[#7d8798]">
+                    Starter prompt loaded from your selected workflow.
+                  </p>
+                ) : null}
               </div>
 
               <div className="flex-1 space-y-4 overflow-y-auto px-4 py-5 sm:px-5">

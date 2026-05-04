@@ -4,7 +4,7 @@ ResearchForge is a SaaS MVP for students and researchers.
 
 It includes:
 
-- User authentication with secure cookie sessions
+- Passwordless magic-link authentication with secure cookie sessions
 - A documents dashboard for academic PDF uploads
 - Page-level PDF text extraction and chunking
 - Embedding generation for retrieval
@@ -39,6 +39,8 @@ npm install
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 SESSION_SECRET=replace-with-a-long-random-secret
 DATABASE_URL=postgres://postgres:password@localhost:5432/researchforge
+RESEND_API_KEY=
+EMAIL_FROM="ResearchForge <hello@researchforge.app>"
 OPENAI_API_KEY=
 OPENAI_CHAT_MODEL=gpt-4.1-mini
 OPENAI_EMBEDDING_MODEL=text-embedding-3-small
@@ -51,6 +53,7 @@ STRIPE_PRO_PRICE_ID=
 
 ```sql
 \i db/migrations/0001_researchforge.sql
+\i db/migrations/0002_magic_links.sql
 ```
 
 4. Start the development server:
@@ -63,7 +66,7 @@ npm run dev
 
 ## Demo Mode
 
-If `DATABASE_URL` is missing, ResearchForge falls back to demo mode so the UI still renders with a sample paper and grounded-output examples. Real uploads, persistence, and billing require the environment variables above.
+If `DATABASE_URL` is missing, ResearchForge falls back to demo mode so the UI still renders with a sample paper and grounded-output examples. In local development, if `RESEND_API_KEY` and `EMAIL_FROM` are missing, the auth form exposes a preview magic link so the passwordless flow can still be tested without a mail provider. Real uploads, persistence, billing, and email delivery require the environment variables above.
 
 ## Important Product Rules
 

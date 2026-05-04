@@ -10,6 +10,98 @@ export const metadata: Metadata = {
   title: "Documents",
 };
 
+function getParam(
+  params: Record<string, string | string[] | undefined>,
+  key: string,
+) {
+  const value = params[key];
+
+  if (Array.isArray(value)) {
+    return value[0] ?? "";
+  }
+
+  return value ?? "";
+}
+
+function getModeDetails(mode: string) {
+  switch (mode) {
+    case "write-draft":
+      return {
+        title: "Draft workflow",
+        description:
+          "Use the starter prompt below to begin outlining a thesis section or paper draft from one of your uploaded PDFs.",
+      };
+    case "generate-diagram":
+      return {
+        title: "Diagram workflow",
+        description:
+          "Open a paper and turn its model, variables, or process into a diagram-ready breakdown.",
+      };
+    case "extract-data":
+      return {
+        title: "Data extraction workflow",
+        description:
+          "Use the starter prompt to pull out methods, variables, samples, and findings from a paper.",
+      };
+    case "write-report":
+      return {
+        title: "Report workflow",
+        description:
+          "Start from an uploaded paper and turn the evidence into a structured report or write-up.",
+      };
+    case "word-document":
+      return {
+        title: "Word document workflow",
+        description:
+          "Launch into a Word-ready outline built from the content of your uploaded research paper.",
+      };
+    case "ppt-presentation":
+      return {
+        title: "Presentation workflow",
+        description:
+          "Use the starter prompt to turn one paper into slides, bullet points, and speaking notes.",
+      };
+    case "latex-manuscript":
+      return {
+        title: "LaTeX manuscript workflow",
+        description:
+          "Translate the document into a manuscript structure with sections and figure placeholders.",
+      };
+    case "latex-poster":
+      return {
+        title: "LaTeX poster workflow",
+        description:
+          "Open a paper and condense it into a poster-friendly structure with concise findings.",
+      };
+    case "data-visualization":
+      return {
+        title: "Data visualization workflow",
+        description:
+          "Pull out the strongest results and convert them into chart and table ideas.",
+      };
+    case "pdf-report":
+      return {
+        title: "PDF report workflow",
+        description:
+          "Use an uploaded paper as the basis for a compact report with summary, findings, and references.",
+      };
+    case "website":
+      return {
+        title: "Website workflow",
+        description:
+          "Reshape a paper into website sections, summaries, and content blocks for publishing.",
+      };
+    case "infographic":
+      return {
+        title: "Infographic workflow",
+        description:
+          "Turn the key points and stats into a simple visual-story outline before designing.",
+      };
+    default:
+      return null;
+  }
+}
+
 function StatCard({
   label,
   value,
@@ -32,8 +124,17 @@ function StatCard({
   );
 }
 
-export default async function DocumentsPage() {
+export default async function DocumentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const session = await requireSession();
+  const params = await searchParams;
+  const starterPrompt = getParam(params, "prompt");
+  const launchMode = getParam(params, "mode");
+  const modeDetails = getModeDetails(launchMode);
+
   const [documents, billing] = await Promise.all([
     getDocumentsForUser(session.id),
     getBillingSnapshot(session.id),
@@ -49,6 +150,19 @@ export default async function DocumentsPage() {
             {uploadsDisabled
               ? "ResearchForge is running in preview mode. Add DATABASE_URL, OPENAI_API_KEY, Stripe keys, and run the migration to unlock real uploads and persistence."
               : "You are exploring ResearchForge in demo mode. Sign up with a configured database to persist real documents and chat history."}
+          </div>
+        ) : null}
+
+        {starterPrompt ? (
+          <div className="rounded-[1.7rem] border border-[#e4dccf] bg-[#fbf7f1] px-5 py-4 text-sm leading-7 text-[#5d5348]">
+            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8c7f71]">
+              {modeDetails?.title ?? "Starter prompt"}
+            </div>
+            <p className="mt-2">&quot;{starterPrompt}&quot;</p>
+            <p className="mt-2 text-[#786d62]">
+              {modeDetails?.description ??
+                "Upload a paper or open one of your documents, then use this as your first grounded PDF question."}
+            </p>
           </div>
         ) : null}
 
@@ -87,8 +201,8 @@ export default async function DocumentsPage() {
               </h2>
             </div>
             <p className="max-w-[32rem] text-sm leading-6 text-[#6d7686]">
-              Each document stores extracted page text, page-based chunks,
-              embeddings, notes, summary sections, and chat history.
+              Each document stores extracted page text, page-based chunks, embeddings,
+              notes, summary sections, and chat history.
             </p>
           </div>
 
@@ -105,7 +219,7 @@ export default async function DocumentsPage() {
                       {document.title}
                     </h3>
                     <p className="mt-1 text-sm text-[#6d7686]">
-                      {document.pageCount} pages · {document.status}
+                      {document.pageCount} pages {"\u00b7"} {document.status}
                     </p>
                   </div>
 

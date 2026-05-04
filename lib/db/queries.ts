@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { getSql, vectorLiteral } from "@/lib/db/client";
 import { getUploadLimit, getQuestionLimit } from "@/lib/billing/plans";
 import type {
+  AuthMode,
   BillingSnapshot,
   ChatMessageRecord,
   DocumentChunkDraft,
@@ -30,10 +31,16 @@ type UserRow = {
   id: string;
   name: string;
   email: string;
-  passwordHash: string;
   plan: SubscriptionPlan;
   stripeCustomerId: string | null;
   subscriptionStatus: string | null;
+};
+
+type MagicLinkRow = {
+  email: string;
+  name: string | null;
+  intent: AuthMode;
+  expiresAt: Date | string;
 };
 
 type DocumentRow = {
@@ -138,7 +145,6 @@ export async function findUserByEmail(email: string) {
       id,
       name,
       email,
-      password_hash as "passwordHash",
       plan,
       stripe_customer_id as "stripeCustomerId",
       subscription_status as "subscriptionStatus"
@@ -147,13 +153,12 @@ export async function findUserByEmail(email: string) {
     limit 1
   `;
 
-  return row ?? null;
+  return row ? toSessionUser(row) : null;
 }
 
 export async function createUserRecord(input: {
   name: string;
   email: string;
-  passwordHash: string;
 }) {
   const sql = getSql();
 
@@ -170,19 +175,82 @@ export async function createUserRecord(input: {
   }
 
   const [row] = await sql<UserRow[]>`
-    insert into users (name, email, password_hash)
-    values (${input.name}, ${input.email}, ${input.passwordHash})
+    insert into users (name, email)
+    values (${input.name}, ${input.email})
     returning
       id,
       name,
       email,
-      password_hash as "passwordHash",
       plan,
       stripe_customer_id as "stripeCustomerId",
       subscription_status as "subscriptionStatus"
   `;
 
   return toSessionUser(row);
+}
+
+export async function createMagicLinkRecord(input: {
+  email: string;
+  name?: string;
+  intent: AuthMode;
+  tokenHash: string;
+  expiresAt: Date;
+}) {
+  const sql = getSql();
+
+  if (!sql) {
+    return;
+  }
+
+  await sql.begin(async (transaction) => {
+    await transaction`
+      delete from auth_magic_links
+      where lower(email) = lower(${input.email})
+        and intent = ${input.intent}
+    `;
+
+    await transaction`
+      insert into auth_magic_links (
+        email,
+        name,
+        intent,
+        token_hash,
+        expires_at
+      )
+      values (
+        ${input.email},
+        ${input.name ?? null},
+        ${input.intent},
+        ${input.tokenHash},
+        ${input.expiresAt}
+      )
+    `;
+  });
+}
+
+export async function consumeMagicLinkRecord(tokenHash: string) {
+  const sql = getSql();
+
+  if (!sql) {
+    return null;
+  }
+
+  const [row] = await sql.begin((transaction) => {
+    return transaction<MagicLinkRow[]>`
+      update auth_magic_links
+      set used_at = now()
+      where token_hash = ${tokenHash}
+        and used_at is null
+        and expires_at > now()
+      returning
+        email,
+        name,
+        intent,
+        expires_at as "expiresAt"
+    `;
+  });
+
+  return row ?? null;
 }
 
 export async function getDocumentsForUser(userId: string) {

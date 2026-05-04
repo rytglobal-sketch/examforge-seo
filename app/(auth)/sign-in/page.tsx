@@ -24,8 +24,8 @@ export default async function SignInPage() {
         Sign in to ResearchForge
       </h2>
       <p className="mt-3 text-sm leading-7 text-[#6d7686]">
-        Continue to your grounded PDF workspace, literature search, notes, and
-        billing dashboard.
+        Enter your email and we&apos;ll send a secure magic link to your grounded PDF
+        workspace, literature search, notes, and billing dashboard.
       </p>
 
       <div className="mt-8">

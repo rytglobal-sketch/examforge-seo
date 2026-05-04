@@ -64,6 +64,7 @@ export function AuthForm({ mode, action }: AuthFormProps) {
           name="email"
           type="email"
           placeholder="you@university.edu"
+          defaultValue={state?.email}
           className="w-full rounded-2xl border border-[#d9e1ee] bg-white px-4 py-3 text-sm text-[#111727] outline-none ring-0 placeholder:text-[#8691a3] focus:border-[#8fb4ff]"
         />
         {state?.fieldErrors?.email ? (
@@ -71,21 +72,24 @@ export function AuthForm({ mode, action }: AuthFormProps) {
         ) : null}
       </div>
 
-      <div className="space-y-2">
-        <label htmlFor="password" className="text-sm font-medium text-[#23324b]">
-          Password
-        </label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          placeholder={isSignUp ? "At least 8 characters" : "Your password"}
-          className="w-full rounded-2xl border border-[#d9e1ee] bg-white px-4 py-3 text-sm text-[#111727] outline-none ring-0 placeholder:text-[#8691a3] focus:border-[#8fb4ff]"
-        />
-        {state?.fieldErrors?.password ? (
-          <p className="text-sm text-[#c13b3b]">{state.fieldErrors.password[0]}</p>
-        ) : null}
+      <div className="rounded-2xl border border-[#dce4f2] bg-[#f8fbff] px-4 py-3 text-sm leading-7 text-[#5e6980]">
+        No password needed. ResearchForge will email you a secure magic link so you can
+        continue into your PDF workspace.
       </div>
+
+      {state?.success ? (
+        <div className="space-y-3 rounded-2xl border border-[#cfe0ff] bg-[#f4f8ff] px-4 py-4 text-sm text-[#21407c]">
+          <p>{state.success}</p>
+          {state.magicLink ? (
+            <Link
+              href={state.magicLink}
+              className="inline-flex items-center rounded-2xl border border-[#b8cdfa] bg-white px-4 py-2 font-semibold text-[#1f5fde]"
+            >
+              Open magic link
+            </Link>
+          ) : null}
+        </div>
+      ) : null}
 
       {state?.error ? (
         <div className="rounded-2xl border border-[#f4caca] bg-[#fff5f5] px-4 py-3 text-sm text-[#a63b3b]">
@@ -94,8 +98,8 @@ export function AuthForm({ mode, action }: AuthFormProps) {
       ) : null}
 
       <SubmitButton
-        label={isSignUp ? "Create account" : "Sign in"}
-        pendingLabel={isSignUp ? "Creating account..." : "Signing in..."}
+        label={isSignUp ? "Create account" : "Email me a sign-in link"}
+        pendingLabel="Sending magic link..."
         pending={pending}
       />
 

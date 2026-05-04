@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { LandingAccountMenu } from "@/components/landing-account-menu";
 import { ResearchComposer } from "@/components/research-composer";
+import { demoDocument } from "@/lib/mock-data";
 
 export const metadata: Metadata = {
   title: "Research Workspace",
@@ -46,7 +48,29 @@ type NavIconName =
   | "pricing"
   | "chevron";
 
-const recentChatHref = "/documents/demo-lithium-amd";
+const recentChatHref = `/documents/${demoDocument.id}`;
+
+function withParams(
+  pathname: string,
+  params: Record<string, string | undefined>,
+) {
+  const searchParams = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(params)) {
+    if (value) {
+      searchParams.set(key, value);
+    }
+  }
+
+  const query = searchParams.toString();
+  return query ? `${pathname}?${query}` : pathname;
+}
+
+const deepResearchHref = withParams(`/documents/${demoDocument.id}`, {
+  tab: "chat",
+  prompt: "What are the key findings, research gaps, and limitations I should notice first?",
+  mode: "deep-research",
+});
 
 const sidebarItems: NavItem[] = [
   { label: "Home", href: "/", icon: "home" },
@@ -69,56 +93,85 @@ const taskColumns: TaskColumn[] = [
     items: [
       {
         label: "Review Literature",
-        href: "/search",
+        href: withParams("/search", {
+          mode: "review-literature",
+          query: "research gaps in thesis student literature review workflows",
+        }),
         accent: "bg-[#edf1ff]",
         textColor: "text-[#2f61ff]",
         symbol: "RL",
       },
       {
         label: "Write a Draft",
-        href: "/documents",
+        href: withParams("/documents", {
+          mode: "write-draft",
+          prompt:
+            "Turn my uploaded paper into a draft outline with an introduction, key arguments, evidence, and conclusion.",
+        }),
         accent: "bg-[#fff0ef]",
         textColor: "text-[#e32a26]",
         symbol: "WD",
       },
       {
         label: "Generate Diagram",
-        href: "/documents",
+        href: withParams("/documents", {
+          mode: "generate-diagram",
+          prompt:
+            "Break this paper into a diagram-ready structure with variables, relationships, and major steps.",
+        }),
         accent: "bg-[#eef3ff]",
         textColor: "text-[#2b67ff]",
         symbol: "GD",
       },
       {
         label: "Systematic Review",
-        href: "/search",
+        href: withParams("/search", {
+          mode: "systematic-review",
+          query: "systematic review thesis topic inclusion exclusion criteria search strategy",
+        }),
         accent: "bg-[#eefbf0]",
         textColor: "text-[#1c9c47]",
         symbol: "SR",
       },
       {
         label: "Search Papers",
-        href: "/search",
+        href: withParams("/search", {
+          mode: "search-papers",
+          query: "thesis students research gap identification literature review",
+        }),
         accent: "bg-[#fff1f7]",
         textColor: "text-[#ef0b78]",
         symbol: "SP",
       },
       {
         label: "Extract Data",
-        href: "/documents",
+        href: withParams("/documents", {
+          mode: "extract-data",
+          prompt:
+            "Extract the sample, methods, variables, and main findings from the paper in a clean structured list.",
+        }),
         accent: "bg-[#edf9ef]",
         textColor: "text-[#17a84f]",
         symbol: "ED",
       },
       {
         label: "Review my Writing",
-        href: "/notes",
+        href: withParams("/notes", {
+          mode: "review-writing",
+          prompt:
+            "List which parts of my draft need clearer evidence, stronger transitions, or simpler wording.",
+        }),
         accent: "bg-[#fff1ef]",
         textColor: "text-[#ff241e]",
         symbol: "RW",
       },
       {
         label: "Write a Report",
-        href: "/documents",
+        href: withParams("/documents", {
+          mode: "write-report",
+          prompt:
+            "Turn my uploaded research into a structured report with headings, supporting evidence, and a short conclusion.",
+        }),
         accent: "bg-[#fff0f0]",
         textColor: "text-[#df1d24]",
         symbol: "WR",
@@ -130,7 +183,7 @@ const taskColumns: TaskColumn[] = [
     items: [
       {
         label: "Deep Research",
-        href: recentChatHref,
+        href: deepResearchHref,
         accent: "bg-[#eef8ff]",
         textColor: "text-[#2f78ff]",
         symbol: "DR",
@@ -191,56 +244,88 @@ const taskColumns: TaskColumn[] = [
     items: [
       {
         label: "Word document",
-        href: "/documents",
+        href: withParams("/documents", {
+          mode: "word-document",
+          prompt:
+            "Create a Word-ready document outline with headings, subheadings, and sections I can expand into a full draft.",
+        }),
         accent: "bg-[#eef2ff]",
         textColor: "text-[#245cd4]",
         symbol: "W",
       },
       {
         label: "PPT presentation",
-        href: "/documents",
+        href: withParams("/documents", {
+          mode: "ppt-presentation",
+          prompt:
+            "Turn this research into a short presentation with slide titles, key bullets, and speaker notes.",
+        }),
         accent: "bg-[#fff2ec]",
         textColor: "text-[#f26a2e]",
         symbol: "P",
       },
       {
         label: "LaTeX Manuscript",
-        href: "/documents",
+        href: withParams("/documents", {
+          mode: "latex-manuscript",
+          prompt:
+            "Format this paper into a LaTeX manuscript structure with sections, subsections, and figure placeholders.",
+        }),
         accent: "bg-[#f3f3f3]",
         textColor: "text-[#292929]",
         symbol: "Tx",
       },
       {
         label: "LaTeX Poster",
-        href: "/documents",
+        href: withParams("/documents", {
+          mode: "latex-poster",
+          prompt:
+            "Summarize this research into a poster-ready structure with headline findings, methods, and visual callouts.",
+        }),
         accent: "bg-[#fff0f1]",
         textColor: "text-[#f20d1d]",
         symbol: "LP",
       },
       {
         label: "Data Visualization",
-        href: "/documents",
+        href: withParams("/documents", {
+          mode: "data-visualization",
+          prompt:
+            "Suggest the best charts, tables, or visual summaries for the study's data and findings.",
+        }),
         accent: "bg-[#eef4ff]",
         textColor: "text-[#2f78ff]",
         symbol: "DV",
       },
       {
         label: "PDF Report",
-        href: "/documents",
+        href: withParams("/documents", {
+          mode: "pdf-report",
+          prompt:
+            "Create a concise PDF-style report structure with an executive summary, findings, and references section.",
+        }),
         accent: "bg-[#fff1f1]",
         textColor: "text-[#ff2c23]",
         symbol: "PDF",
       },
       {
         label: "Website",
-        href: "/documents",
+        href: withParams("/documents", {
+          mode: "website",
+          prompt:
+            "Convert this research into a simple website content outline with sections, summaries, and callout blocks.",
+        }),
         accent: "bg-[#eef4ff]",
         textColor: "text-[#2460ff]",
         symbol: "WB",
       },
       {
         label: "Infographic",
-        href: "/documents",
+        href: withParams("/documents", {
+          mode: "infographic",
+          prompt:
+            "Turn the main findings, definitions, and statistics into infographic-ready content blocks.",
+        }),
         accent: "bg-[#eefbf0]",
         textColor: "text-[#17a84f]",
         symbol: "I",
@@ -536,30 +621,12 @@ export default function HomePage() {
               href={recentChatHref}
               className="mt-2 block rounded-xl px-2 py-2 text-[0.94rem] text-[#312b26] hover:bg-white/70"
             >
-              Lithium Acid Mine Research
+              {demoDocument.title}
             </Link>
           </div>
 
           <div className="border-t border-[#e8e1d8] bg-[#f5f1eb] px-3 py-4">
-            <button
-              type="button"
-              className="flex w-full items-center gap-3 rounded-xl bg-white px-3 py-3 text-left shadow-[0_4px_10px_rgba(120,104,80,0.04)]"
-            >
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#dff0d8] text-[#4c9c3d]">
-                <NavIcon name="spark" className="h-4 w-4" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-[0.95rem] font-medium text-[#171411]">
-                  ryt global
-                </span>
-                <span className="block truncate text-[0.8rem] text-[#776d63]">
-                  rytglobal@gmail.com
-                </span>
-              </span>
-              <span className="text-[#8b8075]">
-                <NavIcon name="chevron" className="h-3.5 w-3.5" />
-              </span>
-            </button>
+            <LandingAccountMenu />
           </div>
         </aside>
 

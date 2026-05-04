@@ -12,12 +12,12 @@ export default function AuthLayout({
           <section className="hidden lg:block">
             <ResearchForgeLogo />
             <h1 className="mt-8 max-w-[12ch] text-5xl font-semibold tracking-[-0.06em] text-[#101522]">
-              Ask better questions of the papers you upload.
+              Upload papers and get back into your research with one secure email link.
             </h1>
             <p className="mt-5 max-w-[34rem] text-lg leading-8 text-[#57637a]">
               Upload academic PDFs, ask questions, get simple explanations,
               generate summaries, create notes, and find citations from the same
-              workspace.
+              workspace without juggling passwords.
             </p>
           </section>
 

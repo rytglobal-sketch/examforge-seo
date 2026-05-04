@@ -26,6 +26,31 @@ function normalizeProvider(value: string): LiteratureProvider {
   return "openalex";
 }
 
+function getModeDetails(mode: string) {
+  switch (mode) {
+    case "review-literature":
+      return {
+        title: "Literature review workflow",
+        description:
+          "Start broad, compare themes across papers, and narrow toward the research gaps most relevant to your thesis.",
+      };
+    case "systematic-review":
+      return {
+        title: "Systematic review workflow",
+        description:
+          "Use structured search terms, tighter scope, and repeatable screening logic to collect papers methodically.",
+      };
+    case "search-papers":
+      return {
+        title: "Paper discovery workflow",
+        description:
+          "Use this search as a starting point for finding strong candidate sources and refining your topic quickly.",
+      };
+    default:
+      return null;
+  }
+}
+
 function ResultCard({
   title,
   authors,
@@ -80,6 +105,8 @@ export default async function SearchPage({
   const query = getParam(params, "query");
   const claim = getParam(params, "claim");
   const provider = normalizeProvider(getParam(params, "provider"));
+  const launchMode = getParam(params, "mode");
+  const modeDetails = getModeDetails(launchMode);
 
   const [results, claimSuggestion] = await Promise.all([
     query ? searchLiterature(query, provider) : Promise.resolve([]),
@@ -90,6 +117,15 @@ export default async function SearchPage({
     <WorkspaceShell user={session} activePath="/search">
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="space-y-6">
+          {modeDetails ? (
+            <div className="rounded-[1.7rem] border border-[#e4dccf] bg-[#fbf7f1] px-5 py-4 text-sm leading-7 text-[#5d5348]">
+              <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8c7f71]">
+                {modeDetails.title}
+              </div>
+              <p className="mt-2 text-[#786d62]">{modeDetails.description}</p>
+            </div>
+          ) : null}
+
           <div className="rounded-[1.8rem] border border-[#dce4f2] bg-white p-5 shadow-[0_20px_40px_rgba(16,21,34,0.04)]">
             <p className="text-sm font-medium uppercase tracking-[0.16em] text-[#7d8798]">
               Literature search
@@ -107,7 +143,7 @@ export default async function SearchPage({
                 type="text"
                 name="query"
                 defaultValue={query}
-                placeholder="e.g. lithium enrichment in acid mine drainage"
+                placeholder="e.g. supervisor feedback and thesis completion"
                 className="w-full rounded-[1.4rem] border border-[#dce4f2] bg-[#f8fbff] px-4 py-4 text-sm text-[#111727] outline-none placeholder:text-[#8a95a8]"
               />
               <div className="flex flex-col gap-3 sm:flex-row">
@@ -158,7 +194,7 @@ export default async function SearchPage({
               <textarea
                 name="claim"
                 defaultValue={claim}
-                placeholder="e.g. Lithium can concentrate in mine drainage treatment sludges and may become a recovery target."
+                placeholder="e.g. Structured note-taking improves source synthesis during thesis writing."
                 className="min-h-[180px] w-full rounded-[1.4rem] border border-[#dce4f2] bg-[#f8fbff] px-4 py-4 text-sm leading-7 text-[#111727] outline-none placeholder:text-[#8a95a8]"
               />
               <input type="hidden" name="provider" value={provider} />
