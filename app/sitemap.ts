@@ -1,7 +1,6 @@
 import type { MetadataRoute } from "next";
-import { seoPages } from "@/lib/seo-pages";
 
-const siteUrl = "https://examforge.academy";
+const siteUrl = "https://researchforge.app";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const lastModified = new Date();
@@ -13,11 +12,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "daily",
       priority: 1,
     },
-    ...seoPages.map((page) => ({
-      url: `${siteUrl}/${page.slug}`,
-      lastModified,
-      changeFrequency: "weekly" as const,
-      priority: 0.8,
-    })),
+    ...["sign-in", "sign-up", "documents", "search", "notes", "billing"].map(
+      (path) => ({
+        url: `${siteUrl}/${path}`,
+        lastModified,
+        changeFrequency: "weekly" as const,
+        priority: 0.8,
+      }),
+    ),
   ];
 }

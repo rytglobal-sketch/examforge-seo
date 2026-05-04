@@ -1,36 +1,73 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ResearchForge
 
-## Getting Started
+ResearchForge is a SaaS MVP for students and researchers.
 
-First, run the development server:
+It includes:
+
+- User authentication with secure cookie sessions
+- A documents dashboard for academic PDF uploads
+- Page-level PDF text extraction and chunking
+- Embedding generation for retrieval
+- Grounded PDF chat that answers only from uploaded document context
+- Mandatory page citations on answers
+- Auto-generated paper summaries
+- Literature search through OpenAlex, Semantic Scholar, and Crossref
+- Citation helper for research claims
+- Notes per document
+- Stripe-ready Free and Pro billing flow
+
+## Tech Stack
+
+- Next.js 16 App Router
+- React 19
+- Tailwind CSS 4
+- PostgreSQL + pgvector
+- OpenAI for embeddings and summaries
+- Stripe for subscriptions
+
+## Local Setup
+
+1. Install dependencies:
+
+```bash
+npm install
+```
+
+2. Create a `.env.local` file:
+
+```bash
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+SESSION_SECRET=replace-with-a-long-random-secret
+DATABASE_URL=postgres://postgres:password@localhost:5432/researchforge
+OPENAI_API_KEY=
+OPENAI_CHAT_MODEL=gpt-4.1-mini
+OPENAI_EMBEDDING_MODEL=text-embedding-3-small
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+STRIPE_PRO_PRICE_ID=
+```
+
+3. Enable pgvector and create the schema:
+
+```sql
+\i db/migrations/0001_researchforge.sql
+```
+
+4. Start the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+5. Open `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Demo Mode
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+If `DATABASE_URL` is missing, ResearchForge falls back to demo mode so the UI still renders with a sample paper and grounded-output examples. Real uploads, persistence, and billing require the environment variables above.
 
-## Learn More
+## Important Product Rules
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Answers must stay grounded in retrieved PDF chunks.
+- If the answer is not in the document, the app should say so.
+- Every grounded answer includes page citations.
+- Dense academic language should be explained in simpler wording.

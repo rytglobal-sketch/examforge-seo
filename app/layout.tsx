@@ -13,13 +13,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://examforge.academy"),
+  metadataBase: new URL("https://researchforge.app"),
   title: {
-    default: "ExamForge Research Copilot",
-    template: "%s | ExamForge",
+    default: "ResearchForge",
+    template: "%s | ResearchForge",
   },
   description:
-    "Research-focused AI workspace for semantic search, PDF chat, literature reviews, academic writing, and citation-backed workflows.",
+    "ResearchForge is an AI research assistant for thesis students to find research gaps, summarize papers, and organize thesis sources faster.",
 };
 
 export default function RootLayout({
