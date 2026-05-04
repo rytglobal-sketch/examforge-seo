@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { WorkspaceShell } from "@/components/app-shell/workspace-shell";
-import { requireSession } from "@/lib/auth/dal";
+import { getWorkspaceViewer } from "@/lib/auth/dal";
 import type { LiteratureProvider } from "@/lib/db/types";
 import { searchLiterature, suggestPapersForClaim } from "@/lib/research/literature";
 
@@ -28,6 +28,12 @@ function normalizeProvider(value: string): LiteratureProvider {
 
 function getModeDetails(mode: string) {
   switch (mode) {
+    case "find-topics":
+      return {
+        title: "Topic discovery workflow",
+        description:
+          "Use this search to explore emerging thesis directions, narrow your interests, and spot underexplored areas quickly.",
+      };
     case "review-literature":
       return {
         title: "Literature review workflow",
@@ -45,6 +51,12 @@ function getModeDetails(mode: string) {
         title: "Paper discovery workflow",
         description:
           "Use this search as a starting point for finding strong candidate sources and refining your topic quickly.",
+      };
+    case "citation-generator":
+      return {
+        title: "Citation generator workflow",
+        description:
+          "Start from a draft claim, tighten the search language, and review likely source candidates before citing them.",
       };
     default:
       return null;
@@ -100,7 +112,7 @@ export default async function SearchPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const session = await requireSession();
+  const session = await getWorkspaceViewer();
   const params = await searchParams;
   const query = getParam(params, "query");
   const claim = getParam(params, "claim");

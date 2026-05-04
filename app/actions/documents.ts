@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { requireSession } from "@/lib/auth/dal";
+import { getWorkspaceViewer } from "@/lib/auth/dal";
 import { getBillingSnapshot } from "@/lib/db/queries";
 import { answerDocumentQuestion, ingestUploadedPdf, saveDocumentNote } from "@/lib/documents/service";
 import { isDatabaseConfigured } from "@/lib/env";
@@ -14,7 +14,14 @@ export async function uploadDocumentAction(
   _previousState: UploadFormState | undefined,
   formData: FormData,
 ) {
-  const session = await requireSession();
+  const session = await getWorkspaceViewer();
+
+  if (session.isDemo) {
+    return {
+      error:
+        "Guest mode is ready for exploring the product, but uploading real PDFs still needs an account.",
+    } satisfies UploadFormState;
+  }
 
   if (!isDatabaseConfigured()) {
     return {
@@ -66,7 +73,7 @@ export async function sendChatMessageAction(input: {
   documentId: string;
   prompt: string;
 }) {
-  const session = await requireSession();
+  const session = await getWorkspaceViewer();
 
   if (!input.prompt.trim()) {
     throw new Error("Ask a question before sending.");
@@ -80,7 +87,7 @@ export async function sendChatMessageAction(input: {
 }
 
 export async function saveNoteAction(input: { documentId: string; body: string }) {
-  const session = await requireSession();
+  const session = await getWorkspaceViewer();
 
   return saveDocumentNote({
     userId: session.id,

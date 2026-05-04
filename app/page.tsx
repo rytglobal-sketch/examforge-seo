@@ -68,23 +68,88 @@ function withParams(
 
 const deepResearchHref = withParams(`/documents/${demoDocument.id}`, {
   tab: "chat",
-  prompt: "What are the key findings, research gaps, and limitations I should notice first?",
+  prompt:
+    "What are the key findings, research gaps, and limitations I should notice first?",
   mode: "deep-research",
+});
+
+const reviewLiteratureHref = withParams("/search", {
+  mode: "review-literature",
+  query: "research gaps in thesis student literature review workflows",
+});
+
+const systematicReviewHref = withParams("/search", {
+  mode: "systematic-review",
+  query:
+    "systematic review thesis topic inclusion exclusion criteria search strategy",
+});
+
+const searchPapersHref = withParams("/search", {
+  mode: "search-papers",
+  query: "thesis students research gap identification literature review",
+});
+
+const citationGeneratorHref = withParams("/search", {
+  mode: "citation-generator",
+  claim:
+    "Structured note-taking improves source synthesis during thesis writing.",
+});
+
+const aiWriterHref = withParams("/documents", {
+  mode: "ai-writer",
+  prompt:
+    "Help me write a clean academic draft from my uploaded paper with a stronger structure and simpler explanations.",
+});
+
+const chatWithPdfHref = withParams(`/documents/${demoDocument.id}`, {
+  tab: "chat",
+  prompt:
+    "Explain this paper in simple terms and tell me which pages support the answer.",
+  mode: "chat-with-pdf",
+});
+
+const findTopicsHref = withParams("/search", {
+  mode: "find-topics",
+  query: "emerging thesis topics in AI research assistants for students",
+});
+
+const paraphraserHref = withParams("/documents", {
+  mode: "paraphraser",
+  prompt:
+    "Rewrite the core findings from my uploaded paper in simpler academic language without losing the meaning.",
+});
+
+const extractDataHref = withParams("/documents", {
+  mode: "extract-data",
+  prompt:
+    "Extract the sample, methods, variables, and main findings from the paper in a clean structured list.",
+});
+
+const aiDetectorHref = withParams("/documents", {
+  mode: "ai-detector",
+  prompt:
+    "Review the tone and phrasing of my writing and flag sections that may sound overly generic or machine-written.",
+});
+
+const agentGalleryHref = withParams("/documents", {
+  mode: "agent-gallery",
+  prompt:
+    "Show me which research workflow is best for literature review, grounded PDF chat, notes, and source synthesis.",
 });
 
 const sidebarItems: NavItem[] = [
   { label: "Home", href: "/", icon: "home" },
   { label: "My Library", href: "/documents", icon: "library" },
   { label: "My Notebooks", href: "/notes", icon: "notebook", hasChevron: true },
-  { label: "Agent Gallery", href: "/documents", icon: "agents" },
-  { label: "AI Writer", href: "/documents", icon: "writer" },
-  { label: "Chat with PDF", href: "/documents", icon: "pdf" },
-  { label: "Literature Review", href: "/search", icon: "review" },
-  { label: "Find Topics", href: "/search", icon: "search" },
-  { label: "Paraphraser", href: "/documents", icon: "paraphrase" },
-  { label: "Citation Generator", href: "/search", icon: "cite" },
-  { label: "Extract Data", href: "/documents", icon: "extract" },
-  { label: "AI Detector", href: "/documents", icon: "detector" },
+  { label: "Agent Gallery", href: agentGalleryHref, icon: "agents" },
+  { label: "AI Writer", href: aiWriterHref, icon: "writer" },
+  { label: "Chat with PDF", href: chatWithPdfHref, icon: "pdf" },
+  { label: "Literature Review", href: reviewLiteratureHref, icon: "review" },
+  { label: "Find Topics", href: findTopicsHref, icon: "search" },
+  { label: "Paraphraser", href: paraphraserHref, icon: "paraphrase" },
+  { label: "Citation Generator", href: citationGeneratorHref, icon: "cite" },
+  { label: "Extract Data", href: extractDataHref, icon: "extract" },
+  { label: "AI Detector", href: aiDetectorHref, icon: "detector" },
 ];
 
 const taskColumns: TaskColumn[] = [
@@ -93,10 +158,7 @@ const taskColumns: TaskColumn[] = [
     items: [
       {
         label: "Review Literature",
-        href: withParams("/search", {
-          mode: "review-literature",
-          query: "research gaps in thesis student literature review workflows",
-        }),
+        href: reviewLiteratureHref,
         accent: "bg-[#edf1ff]",
         textColor: "text-[#2f61ff]",
         symbol: "RL",
@@ -125,31 +187,21 @@ const taskColumns: TaskColumn[] = [
       },
       {
         label: "Systematic Review",
-        href: withParams("/search", {
-          mode: "systematic-review",
-          query: "systematic review thesis topic inclusion exclusion criteria search strategy",
-        }),
+        href: systematicReviewHref,
         accent: "bg-[#eefbf0]",
         textColor: "text-[#1c9c47]",
         symbol: "SR",
       },
       {
         label: "Search Papers",
-        href: withParams("/search", {
-          mode: "search-papers",
-          query: "thesis students research gap identification literature review",
-        }),
+        href: searchPapersHref,
         accent: "bg-[#fff1f7]",
         textColor: "text-[#ef0b78]",
         symbol: "SP",
       },
       {
         label: "Extract Data",
-        href: withParams("/documents", {
-          mode: "extract-data",
-          prompt:
-            "Extract the sample, methods, variables, and main findings from the paper in a clean structured list.",
-        }),
+        href: extractDataHref,
         accent: "bg-[#edf9ef]",
         textColor: "text-[#17a84f]",
         symbol: "ED",

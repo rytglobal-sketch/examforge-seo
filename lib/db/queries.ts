@@ -254,6 +254,10 @@ export async function consumeMagicLinkRecord(tokenHash: string) {
 }
 
 export async function getDocumentsForUser(userId: string) {
+  if (userId === "demo-user") {
+    return [demoDocument];
+  }
+
   const sql = getSql();
 
   if (!sql) {
@@ -306,6 +310,10 @@ export async function getDocumentsForUser(userId: string) {
 }
 
 export async function getDocumentWorkspace(userId: string, documentId: string) {
+  if (userId === "demo-user") {
+    return documentId === demoDocumentId ? demoWorkspace : null;
+  }
+
   const sql = getSql();
 
   if (!sql) {
@@ -552,6 +560,12 @@ export async function persistProcessedDocument(input: {
 }
 
 export async function getDocumentFile(userId: string, documentId: string) {
+  if (userId === "demo-user") {
+    return documentId === demoDocumentId
+      ? { title: demoDocument.title, storagePath: "" }
+      : null;
+  }
+
   const sql = getSql();
 
   if (!sql) {
@@ -579,6 +593,29 @@ export async function appendChatExchange(input: {
   answer: string;
   citations: number[];
 }) {
+  if (input.userId === "demo-user") {
+    return {
+      userMessage: {
+        id: randomUUID(),
+        documentId: input.documentId,
+        userId: input.userId,
+        role: "user" as const,
+        content: input.prompt,
+        citations: [],
+        createdAt: new Date().toISOString(),
+      },
+      assistantMessage: {
+        id: randomUUID(),
+        documentId: input.documentId,
+        userId: input.userId,
+        role: "assistant" as const,
+        content: input.answer,
+        citations: input.citations,
+        createdAt: new Date().toISOString(),
+      },
+    };
+  }
+
   const sql = getSql();
 
   if (!sql) {
@@ -666,6 +703,14 @@ export async function upsertDocumentNote(input: {
   documentId: string;
   body: string;
 }) {
+  if (input.userId === "demo-user") {
+    return {
+      ...demoNote,
+      body: input.body,
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
   const sql = getSql();
 
   if (!sql) {
@@ -706,6 +751,15 @@ export async function upsertDocumentNote(input: {
 }
 
 export async function getNotesForUser(userId: string) {
+  if (userId === "demo-user") {
+    return [
+      {
+        ...demoNote,
+        documentTitle: demoDocument.title,
+      },
+    ] satisfies NoteListItem[];
+  }
+
   const sql = getSql();
 
   if (!sql) {
@@ -734,6 +788,10 @@ export async function getNotesForUser(userId: string) {
 }
 
 export async function getBillingSnapshot(userId: string) {
+  if (userId === "demo-user") {
+    return demoBilling;
+  }
+
   const sql = getSql();
 
   if (!sql) {

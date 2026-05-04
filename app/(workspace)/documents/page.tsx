@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { UploadDocumentForm } from "@/components/forms/upload-document-form";
 import { WorkspaceShell } from "@/components/app-shell/workspace-shell";
-import { requireSession } from "@/lib/auth/dal";
+import { getWorkspaceViewer } from "@/lib/auth/dal";
 import { getBillingSnapshot, getDocumentsForUser } from "@/lib/db/queries";
 import { isDatabaseConfigured } from "@/lib/env";
 
@@ -25,6 +25,18 @@ function getParam(
 
 function getModeDetails(mode: string) {
   switch (mode) {
+    case "agent-gallery":
+      return {
+        title: "Agent gallery workflow",
+        description:
+          "Use this starter prompt to decide which ResearchForge workflow fits your task before you open a paper.",
+      };
+    case "ai-writer":
+      return {
+        title: "AI writer workflow",
+        description:
+          "Start from an uploaded paper and turn its evidence into a clearer academic draft with simpler explanations.",
+      };
     case "write-draft":
       return {
         title: "Draft workflow",
@@ -42,6 +54,12 @@ function getModeDetails(mode: string) {
         title: "Data extraction workflow",
         description:
           "Use the starter prompt to pull out methods, variables, samples, and findings from a paper.",
+      };
+    case "paraphraser":
+      return {
+        title: "Paraphrasing workflow",
+        description:
+          "Open a paper and restate complex academic language in simpler wording while staying faithful to the source.",
       };
     case "write-report":
       return {
@@ -97,6 +115,12 @@ function getModeDetails(mode: string) {
         description:
           "Turn the key points and stats into a simple visual-story outline before designing.",
       };
+    case "ai-detector":
+      return {
+        title: "AI detector workflow",
+        description:
+          "Use this prompt to review phrasing, tone, and sections that may need a more natural academic voice.",
+      };
     default:
       return null;
   }
@@ -129,7 +153,7 @@ export default async function DocumentsPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const session = await requireSession();
+  const session = await getWorkspaceViewer();
   const params = await searchParams;
   const starterPrompt = getParam(params, "prompt");
   const launchMode = getParam(params, "mode");
@@ -140,7 +164,7 @@ export default async function DocumentsPage({
     getBillingSnapshot(session.id),
   ]);
 
-  const uploadsDisabled = !isDatabaseConfigured();
+  const uploadsDisabled = session.isDemo || !isDatabaseConfigured();
 
   return (
     <WorkspaceShell user={session} activePath="/documents">

@@ -63,6 +63,8 @@ export function WorkspaceShell({
   activePath,
   children,
 }: WorkspaceShellProps) {
+  const isGuestMode = user.isDemo;
+
   return (
     <div className="min-h-screen bg-[#f6f8fc] text-[#101522]">
       <div className="mx-auto grid min-h-screen max-w-[1680px] lg:grid-cols-[300px_minmax(0,1fr)]">
@@ -94,7 +96,9 @@ export function WorkspaceShell({
             </div>
 
             <div className="mt-auto rounded-[1.75rem] border border-[#dce4f2] bg-white p-4 shadow-[0_20px_40px_rgba(16,21,34,0.05)]">
-              <div className="text-sm text-[#6d7686]">Signed in as</div>
+              <div className="text-sm text-[#6d7686]">
+                {isGuestMode ? "Guest mode" : "Signed in as"}
+              </div>
               <div className="mt-1 font-semibold text-[#111727]">{user.name}</div>
               <div className="text-sm text-[#6d7686]">{user.email}</div>
               <div className="mt-3 inline-flex rounded-full bg-[#eef5ff] px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#1f6fff]">
@@ -102,14 +106,23 @@ export function WorkspaceShell({
                 {user.isDemo ? " demo" : ""}
               </div>
 
-              <form action={signOutAction} className="mt-4">
-                <button
-                  type="submit"
-                  className="inline-flex w-full items-center justify-center rounded-2xl border border-[#d8e1ee] px-4 py-3 text-sm font-semibold text-[#111727] transition-colors hover:bg-[#f6f8fc]"
+              {isGuestMode ? (
+                <Link
+                  href="/sign-in"
+                  className="mt-4 inline-flex w-full items-center justify-center rounded-2xl border border-[#d8e1ee] px-4 py-3 text-sm font-semibold text-[#111727] transition-colors hover:bg-[#f6f8fc]"
                 >
-                  Sign out
-                </button>
-              </form>
+                  Sign in to save work
+                </Link>
+              ) : (
+                <form action={signOutAction} className="mt-4">
+                  <button
+                    type="submit"
+                    className="inline-flex w-full items-center justify-center rounded-2xl border border-[#d8e1ee] px-4 py-3 text-sm font-semibold text-[#111727] transition-colors hover:bg-[#f6f8fc]"
+                  >
+                    Sign out
+                  </button>
+                </form>
+              )}
             </div>
           </div>
         </aside>

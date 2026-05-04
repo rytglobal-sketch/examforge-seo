@@ -23,7 +23,7 @@ It includes:
 - Tailwind CSS 4
 - PostgreSQL + pgvector
 - OpenAI for embeddings and summaries
-- Stripe for subscriptions
+- Paystack for subscriptions
 
 ## Local Setup
 

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { WorkspaceShell } from "@/components/app-shell/workspace-shell";
-import { requireSession } from "@/lib/auth/dal";
+import { getWorkspaceViewer } from "@/lib/auth/dal";
 import { getNotesForUser } from "@/lib/db/queries";
 
 export const metadata: Metadata = {
@@ -38,7 +38,7 @@ export default async function NotesPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const session = await requireSession();
+  const session = await getWorkspaceViewer();
   const params = await searchParams;
   const starterPrompt = getParam(params, "prompt");
   const launchMode = getParam(params, "mode");

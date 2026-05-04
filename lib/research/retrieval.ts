@@ -36,6 +36,10 @@ function rankChunksByKeyword(query: string, chunks: DocumentChunkRecord[]) {
 }
 
 async function keywordFallback(documentId: string, query: string, limit: number) {
+  if (documentId === demoDocumentId) {
+    return rankChunksByKeyword(query, demoChunks).slice(0, limit);
+  }
+
   const sql = getSql();
 
   if (sql) {
@@ -57,11 +61,6 @@ async function keywordFallback(documentId: string, query: string, limit: number)
 
     return rankChunksByKeyword(query, rows).slice(0, limit);
   }
-
-  if (documentId === demoDocumentId) {
-    return rankChunksByKeyword(query, demoChunks).slice(0, limit);
-  }
-
   return [];
 }
 
@@ -70,6 +69,10 @@ export async function retrieveRelevantChunks(
   query: string,
   limit = 6,
 ) {
+  if (documentId === demoDocumentId) {
+    return keywordFallback(documentId, query, limit);
+  }
+
   const sql = getSql();
 
   if (!sql) {
