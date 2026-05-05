@@ -32,7 +32,6 @@ type UserRow = {
   name: string;
   email: string;
   plan: SubscriptionPlan;
-  stripeCustomerId: string | null;
   subscriptionStatus: string | null;
 };
 
@@ -128,7 +127,6 @@ function toSessionUser(row: UserRow): SessionUser {
     name: row.name,
     email: row.email,
     plan: row.plan,
-    stripeCustomerId: row.stripeCustomerId,
     subscriptionStatus: row.subscriptionStatus,
   };
 }
@@ -146,7 +144,6 @@ export async function findUserByEmail(email: string) {
       name,
       email,
       plan,
-      stripe_customer_id as "stripeCustomerId",
       subscription_status as "subscriptionStatus"
     from users
     where lower(email) = lower(${email})
@@ -168,7 +165,6 @@ export async function createUserRecord(input: {
       name: input.name,
       email: input.email,
       plan: "free" as const,
-      stripeCustomerId: null,
       subscriptionStatus: "inactive",
       isDemo: true,
     };
@@ -182,7 +178,6 @@ export async function createUserRecord(input: {
       name,
       email,
       plan,
-      stripe_customer_id as "stripeCustomerId",
       subscription_status as "subscriptionStatus"
   `;
 
@@ -800,15 +795,21 @@ export async function getBillingSnapshot(userId: string) {
 
   const [user] = await sql<{
     plan: SubscriptionPlan;
-    stripeCustomerId: string | null;
+    paystackCustomerCode: string | null;
+    paystackSubscriptionCode: string | null;
+    paystackPlanCode: string | null;
+    paystackReference: string | null;
+    paystackEmailToken: string | null;
     subscriptionStatus: string | null;
-    priceId: string | null;
   }[]>`
     select
       plan,
-      stripe_customer_id as "stripeCustomerId",
+      paystack_customer_code as "paystackCustomerCode",
+      paystack_subscription_code as "paystackSubscriptionCode",
+      paystack_plan_code as "paystackPlanCode",
+      paystack_reference as "paystackReference",
+      paystack_email_token as "paystackEmailToken",
       subscription_status as "subscriptionStatus",
-      stripe_price_id as "priceId"
     from users
     where id = ${userId}
     limit 1
@@ -824,9 +825,12 @@ export async function getBillingSnapshot(userId: string) {
 
   return {
     plan,
-    stripeCustomerId: user?.stripeCustomerId ?? null,
+    paystackCustomerCode: user?.paystackCustomerCode ?? null,
+    paystackSubscriptionCode: user?.paystackSubscriptionCode ?? null,
+    paystackPlanCode: user?.paystackPlanCode ?? null,
+    paystackReference: user?.paystackReference ?? null,
+    paystackEmailToken: user?.paystackEmailToken ?? null,
     subscriptionStatus: user?.subscriptionStatus ?? null,
-    priceId: user?.priceId ?? null,
     uploadCount: countRow?.count ?? 0,
     uploadLimit: getUploadLimit(plan),
     questionLimit: getQuestionLimit(plan),
@@ -836,9 +840,11 @@ export async function getBillingSnapshot(userId: string) {
 export async function updateUserSubscription(input: {
   userId: string;
   plan: SubscriptionPlan;
-  stripeCustomerId?: string | null;
-  stripeSubscriptionId?: string | null;
-  priceId?: string | null;
+  paystackCustomerCode?: string | null;
+  paystackSubscriptionCode?: string | null;
+  paystackPlanCode?: string | null;
+  paystackReference?: string | null;
+  paystackEmailToken?: string | null;
   subscriptionStatus?: string | null;
 }) {
   const sql = getSql();
@@ -851,16 +857,18 @@ export async function updateUserSubscription(input: {
     update users
     set
       plan = ${input.plan},
-      stripe_customer_id = ${input.stripeCustomerId ?? null},
-      stripe_subscription_id = ${input.stripeSubscriptionId ?? null},
-      stripe_price_id = ${input.priceId ?? null},
+      paystack_customer_code = ${input.paystackCustomerCode ?? null},
+      paystack_subscription_code = ${input.paystackSubscriptionCode ?? null},
+      paystack_plan_code = ${input.paystackPlanCode ?? null},
+      paystack_reference = ${input.paystackReference ?? null},
+      paystack_email_token = ${input.paystackEmailToken ?? null},
       subscription_status = ${input.subscriptionStatus ?? null},
       updated_at = now()
     where id = ${input.userId}
   `;
 }
 
-export async function findUserIdByStripeCustomerId(customerId: string) {
+export async function findUserIdByPaystackCustomerCode(customerCode: string) {
   const sql = getSql();
 
   if (!sql) {
@@ -870,14 +878,14 @@ export async function findUserIdByStripeCustomerId(customerId: string) {
   const [row] = await sql<{ id: string }[]>`
     select id
     from users
-    where stripe_customer_id = ${customerId}
+    where paystack_customer_code = ${customerCode}
     limit 1
   `;
 
   return row?.id ?? null;
 }
 
-export async function findUserIdByStripeSubscriptionId(subscriptionId: string) {
+export async function findUserIdByPaystackSubscriptionCode(subscriptionCode: string) {
   const sql = getSql();
 
   if (!sql) {
@@ -887,7 +895,7 @@ export async function findUserIdByStripeSubscriptionId(subscriptionId: string) {
   const [row] = await sql<{ id: string }[]>`
     select id
     from users
-    where stripe_subscription_id = ${subscriptionId}
+    where paystack_subscription_code = ${subscriptionCode}
     limit 1
   `;
 

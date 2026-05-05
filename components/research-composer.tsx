@@ -14,6 +14,7 @@ type ComposerTool = {
   label: string;
   description: string;
   href: string;
+  mode?: string;
   queryKey?: "query" | "claim" | "prompt";
 };
 
@@ -25,6 +26,14 @@ type QuickAction = {
 };
 
 const toolOptions: ComposerTool[] = [
+  {
+    id: "deep-research",
+    label: "Deep Research",
+    description: "Run a broader literature synthesis in the document workspace.",
+    href: "/documents/demo-thesis-review",
+    mode: "deep-research",
+    queryKey: "prompt",
+  },
   {
     id: "search-papers",
     label: "Search Papers",
@@ -91,15 +100,18 @@ function getToolById(toolId: string) {
 
 function buildToolHref(tool: ComposerTool, prompt: string) {
   const trimmedPrompt = prompt.trim();
+  const params = new URLSearchParams();
 
-  if (!trimmedPrompt || !tool.queryKey) {
-    return tool.href;
+  if (tool.mode) {
+    params.set("mode", tool.mode);
   }
 
-  const params = new URLSearchParams();
-  params.set(tool.queryKey, trimmedPrompt);
+  if (trimmedPrompt && tool.queryKey) {
+    params.set(tool.queryKey, trimmedPrompt);
+  }
 
-  return `${tool.href}?${params.toString()}`;
+  const query = params.toString();
+  return query ? `${tool.href}?${query}` : tool.href;
 }
 
 function MenuCard({

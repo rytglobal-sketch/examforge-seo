@@ -26,7 +26,7 @@ export const planCatalog = {
       "Unlimited PDF uploads",
       "Unlimited grounded chat answers",
       "Priority summary generation",
-      "Stripe-managed subscription billing",
+      "Paystack-managed subscription billing",
     ],
   },
 };
@@ -43,10 +43,18 @@ export function getQuestionLimit(plan: SubscriptionPlan) {
   return getPlanConfig(plan).questionLimit;
 }
 
-export function getStripePriceId(plan: SubscriptionPlan) {
+export function getPaystackPlanCode(plan: SubscriptionPlan) {
   if (plan !== "pro") {
     return "";
   }
 
-  return process.env.STRIPE_PRO_PRICE_ID ?? "";
+  return process.env.PAYSTACK_PRO_PLAN_CODE ?? "";
+}
+
+export function getPaystackAmount(plan: SubscriptionPlan) {
+  if (plan !== "pro") {
+    return "";
+  }
+
+  return process.env.PAYSTACK_PRO_AMOUNT ?? "";
 }

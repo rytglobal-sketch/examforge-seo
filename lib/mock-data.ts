@@ -227,9 +227,12 @@ export const demoClaimSuggestion: ClaimSuggestion = {
 
 export const demoBilling: BillingSnapshot = {
   plan: "free",
-  stripeCustomerId: null,
+  paystackCustomerCode: null,
+  paystackSubscriptionCode: null,
+  paystackPlanCode: null,
+  paystackReference: null,
+  paystackEmailToken: null,
   subscriptionStatus: "inactive",
-  priceId: null,
   uploadCount: 1,
   uploadLimit: 3,
   questionLimit: 25,

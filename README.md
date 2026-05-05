@@ -14,7 +14,7 @@ It includes:
 - Literature search through OpenAlex, Semantic Scholar, and Crossref
 - Citation helper for research claims
 - Notes per document
-- Stripe-ready Free and Pro billing flow
+- Paystack-ready Free and Pro billing flow
 
 ## Tech Stack
 
@@ -22,7 +22,8 @@ It includes:
 - React 19
 - Tailwind CSS 4
 - PostgreSQL + pgvector
-- OpenAI for embeddings and summaries
+- OpenAI for embeddings and grounded PDF chat
+- OpenRouter for Deep Research synthesis
 - Paystack for subscriptions
 
 ## Local Setup
@@ -33,7 +34,7 @@ It includes:
 npm install
 ```
 
-2. Create a `.env.local` file:
+2. Create a `.env.local` file (you can start from `.env.local.example`):
 
 ```bash
 NEXT_PUBLIC_APP_URL=http://localhost:3000
@@ -44,9 +45,11 @@ EMAIL_FROM="ResearchForge <hello@researchforge.app>"
 OPENAI_API_KEY=
 OPENAI_CHAT_MODEL=gpt-4.1-mini
 OPENAI_EMBEDDING_MODEL=text-embedding-3-small
-STRIPE_SECRET_KEY=
-STRIPE_WEBHOOK_SECRET=
-STRIPE_PRO_PRICE_ID=
+OPENROUTER_API_KEY=
+OPENROUTER_DEEP_RESEARCH_MODEL=openai/o3-deep-research
+PAYSTACK_SECRET_KEY=
+PAYSTACK_PRO_PLAN_CODE=
+PAYSTACK_PRO_AMOUNT=
 ```
 
 3. Enable pgvector and create the schema:
@@ -54,6 +57,7 @@ STRIPE_PRO_PRICE_ID=
 ```sql
 \i db/migrations/0001_researchforge.sql
 \i db/migrations/0002_magic_links.sql
+\i db/migrations/0003_paystack_billing.sql
 ```
 
 4. Start the development server:
@@ -67,6 +71,8 @@ npm run dev
 ## Demo Mode
 
 If `DATABASE_URL` is missing, ResearchForge falls back to demo mode so the UI still renders with a sample paper and grounded-output examples. In local development, if `RESEND_API_KEY` and `EMAIL_FROM` are missing, the auth form exposes a preview magic link so the passwordless flow can still be tested without a mail provider. Real uploads, persistence, billing, and email delivery require the environment variables above.
+
+If `OPENROUTER_API_KEY` is missing, the Deep Research workspace still works in a fallback ranking mode, but it will not use OpenRouter's latest deep-research model.
 
 ## Important Product Rules
 

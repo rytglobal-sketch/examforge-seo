@@ -32,7 +32,6 @@ export type SessionUser = {
   name: string;
   email: string;
   plan: SubscriptionPlan;
-  stripeCustomerId?: string | null;
   subscriptionStatus?: string | null;
   isDemo?: boolean;
 };
@@ -145,6 +144,38 @@ export type LiteratureResult = {
   relevanceNote: string;
 };
 
+export type DeepResearchRelevanceTag =
+  | "Highly Relevant"
+  | "Relevant"
+  | "Partially Relevant"
+  | "Low Relevance";
+
+export type DeepResearchPaper = LiteratureResult & {
+  relevanceScore: number;
+  relevanceTag: DeepResearchRelevanceTag;
+  reasoning: string;
+  sourceLabel: string;
+};
+
+export type DeepResearchSection = {
+  title: string;
+  body: string;
+  supportingPaperIds: string[];
+};
+
+export type DeepResearchResult = {
+  query: string;
+  refinedQuery: string;
+  model: string;
+  totalCandidatePapers: number;
+  searchQueries: string[];
+  searchSummary: string;
+  tldr: string;
+  sections: DeepResearchSection[];
+  papers: DeepResearchPaper[];
+  relatedQuestions: string[];
+};
+
 export type ClaimSuggestion = {
   claim: string;
   recommendedSearch: string;
@@ -153,9 +184,12 @@ export type ClaimSuggestion = {
 
 export type BillingSnapshot = {
   plan: SubscriptionPlan;
-  stripeCustomerId?: string | null;
+  paystackCustomerCode?: string | null;
+  paystackSubscriptionCode?: string | null;
+  paystackPlanCode?: string | null;
+  paystackReference?: string | null;
+  paystackEmailToken?: string | null;
   subscriptionStatus?: string | null;
-  priceId?: string | null;
   uploadCount: number;
   uploadLimit: number | null;
   questionLimit: number | null;

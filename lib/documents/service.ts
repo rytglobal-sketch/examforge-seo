@@ -13,6 +13,7 @@ import {
 import type { ChatMessageRecord } from "@/lib/db/types";
 import { splitPageIntoChunks } from "@/lib/documents/chunking";
 import { extractPdfPages } from "@/lib/documents/pdf";
+import { runDeepResearch } from "@/lib/research/deep-research";
 import { answerFromDocumentContext, embedTexts, generateDocumentSummary } from "@/lib/research/openai";
 import { retrieveRelevantChunks } from "@/lib/research/retrieval";
 
@@ -116,6 +117,24 @@ export async function answerDocumentQuestion(input: {
     assistantMessage: ChatMessageRecord;
     supportingQuotes: string[];
   };
+}
+
+export async function runDocumentDeepResearch(input: {
+  userId: string;
+  documentId: string;
+  prompt: string;
+}) {
+  const workspace = await getDocumentWorkspace(input.userId, input.documentId);
+
+  if (!workspace) {
+    throw new Error("Document not found.");
+  }
+
+  return runDeepResearch(input.prompt, {
+    documentTitle: workspace.document.title,
+    documentSummary: workspace.document.summary.simpleSummary,
+    pages: workspace.pages,
+  });
 }
 
 export async function saveDocumentNote(input: {

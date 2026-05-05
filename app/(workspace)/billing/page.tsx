@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
-import { openBillingPortalAction, startProCheckoutAction } from "@/app/actions/billing";
+import {
+  openBillingManagementAction,
+  startProCheckoutAction,
+} from "@/app/actions/billing";
 import { WorkspaceShell } from "@/components/app-shell/workspace-shell";
 import { getPlanConfig, planCatalog } from "@/lib/billing/plans";
 import { requireSession } from "@/lib/auth/dal";
 import { getBillingSnapshot } from "@/lib/db/queries";
-import { isStripeConfigured } from "@/lib/env";
+import { isPaystackConfigured } from "@/lib/env";
 
 export const metadata: Metadata = {
   title: "Billing",
@@ -30,8 +33,8 @@ export default async function BillingPage({
   const billing = await getBillingSnapshot(session.id);
   const params = await searchParams;
   const checkoutState = getParam(params, "checkout");
-  const stripeMessage = getParam(params, "stripe");
-  const portalMessage = getParam(params, "portal");
+  const paystackMessage = getParam(params, "paystack");
+  const manageMessage = getParam(params, "manage");
   const currentPlan = getPlanConfig(billing.plan);
 
   return (
@@ -39,16 +42,24 @@ export default async function BillingPage({
       <section className="space-y-6">
         {checkoutState === "success" ? (
           <div className="rounded-[1.7rem] border border-[#cfe6d4] bg-[#f3fbf4] px-5 py-4 text-sm leading-7 text-[#2d6a3d]">
-            Stripe checkout completed. Your subscription will refresh as soon as
-            the webhook confirms the payment.
+            Paystack checkout completed. Your subscription will refresh as soon
+            as the payment verification and webhook sync finish.
           </div>
         ) : null}
 
-        {stripeMessage === "missing" || portalMessage === "missing" ? (
+        {checkoutState === "failed" ? (
           <div className="rounded-[1.7rem] border border-[#f2d7bf] bg-[#fff7ef] px-5 py-4 text-sm leading-7 text-[#8a5728]">
-            Stripe is not fully configured yet. Add
-            `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, and
-            `STRIPE_PRO_PRICE_ID` to enable live checkout and portal access.
+            We could not verify that Paystack transaction. Please try the
+            upgrade again from your billing page.
+          </div>
+        ) : null}
+
+        {paystackMessage === "missing" || manageMessage === "missing" ? (
+          <div className="rounded-[1.7rem] border border-[#f2d7bf] bg-[#fff7ef] px-5 py-4 text-sm leading-7 text-[#8a5728]">
+            Paystack is not fully configured yet. Add `PAYSTACK_SECRET_KEY`,
+            `PAYSTACK_PRO_PLAN_CODE`, and `PAYSTACK_PRO_AMOUNT` to enable live
+            checkout. If subscription management is unavailable, wait for the
+            Paystack subscription webhook to sync first.
           </div>
         ) : null}
 
@@ -146,20 +157,23 @@ export default async function BillingPage({
                       Included by default
                     </button>
                   ) : isCurrent ? (
-                    <form action={openBillingPortalAction}>
+                    <form action={openBillingManagementAction}>
                       <button
                         type="submit"
-                        disabled={!isStripeConfigured()}
+                        disabled={
+                          !isPaystackConfigured() ||
+                          !billing.paystackSubscriptionCode
+                        }
                         className="inline-flex w-full items-center justify-center rounded-2xl bg-[#111727] px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-[#aeb6c4]"
                       >
-                        Open billing portal
+                        Manage subscription
                       </button>
                     </form>
                   ) : (
                     <form action={startProCheckoutAction}>
                       <button
                         type="submit"
-                        disabled={!isStripeConfigured()}
+                        disabled={!isPaystackConfigured()}
                         className="inline-flex w-full items-center justify-center rounded-2xl bg-[#1f6fff] px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-[#9bbcff]"
                       >
                         Upgrade to Pro

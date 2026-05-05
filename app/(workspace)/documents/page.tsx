@@ -172,7 +172,7 @@ export default async function DocumentsPage({
         {session.isDemo || uploadsDisabled ? (
           <div className="rounded-[1.7rem] border border-[#cfe0fb] bg-[#eef5ff] px-5 py-4 text-sm leading-7 text-[#325078]">
             {uploadsDisabled
-              ? "ResearchForge is running in preview mode. Add DATABASE_URL, OPENAI_API_KEY, Stripe keys, and run the migration to unlock real uploads and persistence."
+              ? "ResearchForge is running in preview mode. Add DATABASE_URL, OPENAI_API_KEY, Paystack keys, and run the migration to unlock real uploads and persistence."
               : "You are exploring ResearchForge in demo mode. Sign up with a configured database to persist real documents and chat history."}
           </div>
         ) : null}

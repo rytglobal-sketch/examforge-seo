@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { requireSession } from "@/lib/auth/dal";
-import { createCheckoutUrl, createPortalUrl } from "@/lib/billing/stripe";
+import { createCheckoutUrl, createManagementUrl } from "@/lib/billing/paystack";
 import { getBillingSnapshot } from "@/lib/db/queries";
 
 export async function startProCheckoutAction() {
@@ -10,23 +10,22 @@ export async function startProCheckoutAction() {
   const checkoutUrl = await createCheckoutUrl(session, "pro");
 
   if (!checkoutUrl) {
-    redirect("/billing?stripe=missing");
+    redirect("/billing?paystack=missing");
   }
 
   redirect(checkoutUrl);
 }
 
-export async function openBillingPortalAction() {
+export async function openBillingManagementAction() {
   const session = await requireSession();
   const billing = await getBillingSnapshot(session.id);
-  const portalUrl = await createPortalUrl({
-    ...session,
-    stripeCustomerId: billing.stripeCustomerId,
-  });
+  const managementUrl = await createManagementUrl(
+    billing.paystackSubscriptionCode ?? "",
+  );
 
-  if (!portalUrl) {
-    redirect("/billing?portal=missing");
+  if (!managementUrl) {
+    redirect("/billing?manage=missing");
   }
 
-  redirect(portalUrl);
+  redirect(managementUrl);
 }

@@ -3,7 +3,12 @@
 import { redirect } from "next/navigation";
 import { getWorkspaceViewer } from "@/lib/auth/dal";
 import { getBillingSnapshot } from "@/lib/db/queries";
-import { answerDocumentQuestion, ingestUploadedPdf, saveDocumentNote } from "@/lib/documents/service";
+import {
+  answerDocumentQuestion,
+  ingestUploadedPdf,
+  runDocumentDeepResearch,
+  saveDocumentNote,
+} from "@/lib/documents/service";
 import { isDatabaseConfigured } from "@/lib/env";
 
 export type UploadFormState = {
@@ -80,6 +85,23 @@ export async function sendChatMessageAction(input: {
   }
 
   return answerDocumentQuestion({
+    userId: session.id,
+    documentId: input.documentId,
+    prompt: input.prompt.trim(),
+  });
+}
+
+export async function runDeepResearchAction(input: {
+  documentId: string;
+  prompt: string;
+}) {
+  const session = await getWorkspaceViewer();
+
+  if (!input.prompt.trim()) {
+    throw new Error("Ask a research question before running Deep Research.");
+  }
+
+  return runDocumentDeepResearch({
     userId: session.id,
     documentId: input.documentId,
     prompt: input.prompt.trim(),

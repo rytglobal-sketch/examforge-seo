@@ -20,11 +20,15 @@ export function isOpenAIConfigured() {
   return Boolean(process.env.OPENAI_API_KEY);
 }
 
-export function isStripeConfigured() {
+export function isOpenRouterConfigured() {
+  return Boolean(process.env.OPENROUTER_API_KEY);
+}
+
+export function isPaystackConfigured() {
   return Boolean(
-    process.env.STRIPE_SECRET_KEY &&
-      process.env.STRIPE_WEBHOOK_SECRET &&
-      process.env.STRIPE_PRO_PRICE_ID,
+    process.env.PAYSTACK_SECRET_KEY &&
+      process.env.PAYSTACK_PRO_PLAN_CODE &&
+      process.env.PAYSTACK_PRO_AMOUNT,
   );
 }
 
@@ -34,6 +38,14 @@ export function getChatModel() {
 
 export function getEmbeddingModel() {
   return process.env.OPENAI_EMBEDDING_MODEL ?? "text-embedding-3-small";
+}
+
+export function getOpenRouterBaseUrl() {
+  return process.env.OPENROUTER_BASE_URL ?? "https://openrouter.ai/api/v1";
+}
+
+export function getDeepResearchModel() {
+  return process.env.OPENROUTER_DEEP_RESEARCH_MODEL ?? "openai/o3-deep-research";
 }
 
 export function getPlanName(plan: SubscriptionPlan) {
