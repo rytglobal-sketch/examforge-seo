@@ -6,18 +6,18 @@ import { useEffect, useRef, useState } from "react";
 const accountActions = [
   {
     href: "/documents",
-    label: "Open workspace",
-    description: "Go to your papers and grounded PDF chat.",
+    label: "My papers",
+    description: "Open uploaded PDFs, summaries, and grounded chat.",
+  },
+  {
+    href: "/search",
+    label: "Find citations",
+    description: "Search for supporting papers and citation leads.",
   },
   {
     href: "/notes",
     label: "View notes",
     description: "Open saved research notes and writing ideas.",
-  },
-  {
-    href: "/billing",
-    label: "Billing and plan",
-    description: "Manage Free or Pro access.",
   },
   {
     href: "/sign-in",

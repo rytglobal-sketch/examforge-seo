@@ -3,14 +3,21 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
+export type ResearchComposerToolId =
+  | "citation-helper"
+  | "chat-with-pdf"
+  | "notes";
+
 type ResearchComposerProps = {
   placeholder: string;
   className?: string;
   textareaMinHeightClassName?: string;
+  initialPrompt?: string;
+  initialToolId?: ResearchComposerToolId;
 };
 
 type ComposerTool = {
-  id: string;
+  id: ResearchComposerToolId;
   label: string;
   description: string;
   href: string;
@@ -27,45 +34,23 @@ type QuickAction = {
 
 const toolOptions: ComposerTool[] = [
   {
-    id: "deep-research",
-    label: "Deep Research",
-    description: "Run a broader literature synthesis in the document workspace.",
-    href: "/documents/demo-thesis-review",
-    mode: "deep-research",
-    queryKey: "prompt",
-  },
-  {
-    id: "search-papers",
-    label: "Search Papers",
-    description: "Find relevant papers and related literature.",
-    href: "/search",
-    queryKey: "query",
-  },
-  {
-    id: "literature-review",
-    label: "Literature Review",
-    description: "Turn a topic into a focused review search.",
-    href: "/search",
-    queryKey: "query",
-  },
-  {
-    id: "citation-helper",
-    label: "Citation Helper",
-    description: "Turn a draft claim into candidate sources.",
-    href: "/search",
-    queryKey: "claim",
-  },
-  {
     id: "chat-with-pdf",
-    label: "Chat with PDF",
-    description: "Open the document workspace and carry your prompt with you.",
+    label: "Ask PDF",
+    description: "Open a paper and carry your question into grounded chat.",
     href: "/documents",
     queryKey: "prompt",
   },
   {
+    id: "citation-helper",
+    label: "Find Citations",
+    description: "Turn a draft claim or topic into candidate sources.",
+    href: "/search",
+    queryKey: "claim",
+  },
+  {
     id: "notes",
     label: "Notes",
-    description: "Save a research idea as a starter note.",
+    description: "Save a research idea, takeaway, or writing note.",
     href: "/notes",
     queryKey: "prompt",
   },
@@ -74,14 +59,14 @@ const toolOptions: ComposerTool[] = [
 const quickActions: QuickAction[] = [
   {
     id: "upload-pdf",
-    label: "Upload a PDF",
-    description: "Open your document workspace and upload a paper.",
+    label: "My Papers",
+    description: "Open your paper library and upload a PDF.",
     href: "/documents",
   },
   {
-    id: "open-search",
-    label: "Open Search",
-    description: "Go straight to literature search and citation discovery.",
+    id: "find-citations",
+    label: "Find Citations",
+    description: "Go straight to paper search and citation discovery.",
     href: "/search",
   },
   {
@@ -92,7 +77,7 @@ const quickActions: QuickAction[] = [
   },
 ];
 
-const defaultToolId = toolOptions[0]?.id ?? "search-papers";
+const defaultToolId = toolOptions[0]?.id ?? "chat-with-pdf";
 
 function getToolById(toolId: string) {
   return toolOptions.find((tool) => tool.id === toolId) ?? toolOptions[0];
@@ -170,13 +155,20 @@ export function ResearchComposer({
   placeholder,
   className = "",
   textareaMinHeightClassName = "min-h-[120px]",
+  initialPrompt = "",
+  initialToolId,
 }: ResearchComposerProps) {
   const router = useRouter();
   const rootRef = useRef<HTMLElement>(null);
-  const [prompt, setPrompt] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [prompt, setPrompt] = useState(initialPrompt);
   const [activeMenu, setActiveMenu] = useState<"actions" | "tools" | null>(null);
-  const [selectedToolId, setSelectedToolId] = useState(defaultToolId);
-  const [helperMessage, setHelperMessage] = useState("");
+  const [selectedToolId, setSelectedToolId] = useState(initialToolId ?? defaultToolId);
+  const [helperMessage, setHelperMessage] = useState(
+    initialToolId
+      ? `Template loaded for ${getToolById(initialToolId)?.label}. Replace the blanks with your topic and send it.`
+      : "",
+  );
 
   const selectedTool = getToolById(selectedToolId);
   const showSelectedToolBadge = selectedTool.id !== defaultToolId;
@@ -207,6 +199,16 @@ export function ResearchComposer({
     };
   }, [activeMenu]);
 
+  useEffect(() => {
+    if (!initialPrompt.trim() && !initialToolId) {
+      return;
+    }
+
+    window.setTimeout(() => {
+      textareaRef.current?.focus();
+    }, 0);
+  }, [initialPrompt, initialToolId]);
+
   function handleSubmit() {
     router.push(buildToolHref(selectedTool, prompt));
     setActiveMenu(null);
@@ -236,6 +238,7 @@ export function ResearchComposer({
       className={`rounded-[1.55rem] border border-[#ddd8d0] bg-white px-4 pb-3 pt-4 shadow-[0_24px_54px_rgba(132,112,85,0.1)] sm:px-5 sm:pb-4 ${className}`}
     >
       <textarea
+        ref={textareaRef}
         aria-label="Research prompt"
         value={prompt}
         onChange={(event) => setPrompt(event.target.value)}

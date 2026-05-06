@@ -12,23 +12,18 @@ type WorkspaceShellProps = {
 const navigationItems = [
   {
     href: "/documents",
-    label: "Documents",
-    description: "Upload papers, ask questions, and generate summaries",
+    label: "Papers",
+    description: "Upload PDFs, ask questions, and read summaries",
   },
   {
     href: "/search",
-    label: "Search",
-    description: "Search literature and find papers worth citing",
+    label: "Citations",
+    description: "Find papers and citation support for your claims",
   },
   {
     href: "/notes",
     label: "Notes",
-    description: "Keep notes and organize your source material",
-  },
-  {
-    href: "/billing",
-    label: "Billing",
-    description: "Manage Free and Pro access",
+    description: "Save ideas, takeaways, and writing reminders",
   },
 ] as const;
 
@@ -86,12 +81,14 @@ export function WorkspaceShell({
 
             <div className="mt-8 rounded-[1.6rem] border border-[#dce4f2] bg-[#f8fbff] p-4">
               <div className="text-sm font-semibold text-[#23324b]">
-                Research rules
+                What this assistant does
               </div>
               <ul className="mt-3 space-y-2 text-sm leading-6 text-[#667287]">
+                <li>Upload papers and chat with them page by page.</li>
+                <li>Explain dense academic language in simpler terms.</li>
+                <li>Generate summaries and save notes as you read.</li>
                 <li>Answer only from retrieved PDF chunks.</li>
-                <li>Say clearly when the document does not contain the answer.</li>
-                <li>Always return page citations for grounded answers.</li>
+                <li>Show page citations or say when the answer is not in the paper.</li>
               </ul>
             </div>
 
@@ -135,7 +132,7 @@ export function WorkspaceShell({
                   Research workspace
                 </p>
                 <h1 className="mt-1 text-2xl font-semibold tracking-[-0.05em] text-[#111727]">
-                  Ask questions and get clear answers from your PDFs
+                  Upload papers, ask questions, and cite sources faster
                 </h1>
               </div>
 
@@ -144,7 +141,13 @@ export function WorkspaceShell({
                   Upload papers
                 </div>
                 <div className="rounded-full border border-[#dce4f2] bg-white px-4 py-2">
+                  Ask questions
+                </div>
+                <div className="rounded-full border border-[#dce4f2] bg-white px-4 py-2">
                   Simple explanations
+                </div>
+                <div className="rounded-full border border-[#dce4f2] bg-white px-4 py-2">
+                  Summaries
                 </div>
                 <div className="rounded-full border border-[#dce4f2] bg-white px-4 py-2">
                   Notes + citations

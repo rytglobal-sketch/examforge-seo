@@ -23,39 +23,32 @@ type DocumentWorkspaceProps = {
 };
 
 type WorkspaceFileId = "insights" | "evidence";
-type WorkspaceView = "activity" | "files";
 type ComposerTool = "deep-research" | "chat-with-pdf" | "notes";
-type RailMode = "sources" | "chat";
+type SidebarPanel = "sources" | "chat" | "files";
 
-const railItems = [
-  { id: "menu", label: "=" },
-  { id: "create", label: "+" },
-  { id: "home", label: "H" },
-  { id: "library", label: "L" },
-  { id: "notes", label: "N" },
-  { id: "agents", label: "A" },
-  { id: "write", label: "W" },
-  { id: "search", label: "S" },
-  { id: "cite", label: "C" },
-  { id: "extract", label: "E" },
-  { id: "review", label: "R" },
-] as const;
-
-const composerTools: Array<{ id: ComposerTool; label: string; helper: string }> = [
+const composerTools: Array<{
+  id: ComposerTool;
+  label: string;
+  helper: string;
+  placeholder: string;
+}> = [
   {
     id: "deep-research",
     label: "Deep Research",
-    helper: "Ask for a broader synthesis grounded in the document.",
+    helper: "Find related papers and broader citation support from this document.",
+    placeholder: "Ask Deep Research to map related papers, gaps, and patterns...",
   },
   {
     id: "chat-with-pdf",
-    label: "Chat with PDF",
-    helper: "Ask a direct question and get page-backed answers.",
+    label: "Ask PDF",
+    helper: "Ask a direct question and get a simple, page-backed answer.",
+    placeholder: "Ask a question about this PDF...",
   },
   {
     id: "notes",
-    label: "Notebook",
-    helper: "Save the current output into the document notebook.",
+    label: "Notes",
+    helper: "Save a takeaway, reminder, or writing note from this paper.",
+    placeholder: "Write a note to save from this paper...",
   },
 ];
 
@@ -398,6 +391,7 @@ function Composer({
   onVoiceClick,
   helperMessage,
   inputRef,
+  placeholder,
 }: {
   prompt: string;
   onPromptChange: (value: string) => void;
@@ -409,6 +403,7 @@ function Composer({
   onVoiceClick: () => void;
   helperMessage: string;
   inputRef: RefObject<HTMLTextAreaElement | null>;
+  placeholder: string;
 }) {
   const [showQuickActions, setShowQuickActions] = useState(false);
   const [showTools, setShowTools] = useState(false);
@@ -439,7 +434,7 @@ function Composer({
         ref={inputRef}
         value={prompt}
         onChange={(event) => onPromptChange(event.target.value)}
-        placeholder="Ask anything..."
+        placeholder={placeholder}
         className="min-h-[108px] w-full resize-none rounded-[1.2rem] border-0 bg-transparent px-3 py-3 text-sm leading-7 text-[#1a2433] outline-none placeholder:text-[#9aa2ae]"
       />
 
@@ -662,9 +657,8 @@ export function DocumentWorkspaceView({
   const [selectedFile, setSelectedFile] = useState<WorkspaceFileId>(
     initialTab === "notes" ? "evidence" : "insights",
   );
-  const [workspaceView, setWorkspaceView] = useState<WorkspaceView>("files");
-  const [railMode, setRailMode] = useState<RailMode>(
-    initialTab === "chat" ? "chat" : "sources",
+  const [sidebarPanel, setSidebarPanel] = useState<SidebarPanel>(
+    initialTab === "notes" ? "files" : initialTab === "chat" ? "chat" : "sources",
   );
   const [messages, setMessages] = useState(workspace.messages);
   const [prompt, setPrompt] = useState(initialPrompt);
@@ -678,7 +672,6 @@ export function DocumentWorkspaceView({
     workspace.pages[0]?.pageNumber ?? null,
   );
   const [focusedPaperId, setFocusedPaperId] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState<"up" | "down" | null>(null);
   const [helperMessage, setHelperMessage] = useState(
     initialMode === "deep-research"
       ? "Deep Research ranks external papers and turns them into a clearer report."
@@ -687,7 +680,7 @@ export function DocumentWorkspaceView({
   const [isSending, startSending] = useTransition();
   const [isSaving, startSaving] = useTransition();
   const [saveMessage, setSaveMessage] = useState(
-    workspace.note?.updatedAt ? "Notebook synced." : "",
+    workspace.note?.updatedAt ? "Notes synced." : "",
   );
   const composerRef = useRef<HTMLTextAreaElement | null>(null);
   const autoRunStartedRef = useRef(false);
@@ -698,24 +691,24 @@ export function DocumentWorkspaceView({
         {
           id: "insights" as const,
           label: renderFileLabel(workspace.document.title, "deep_research_report.md"),
-          description: "Final output",
+          description: "Summary",
         },
         {
           id: "evidence" as const,
           label: renderFileLabel(workspace.document.title, "ranked_papers.txt"),
-          description: "Paper results",
+          description: "Citations",
         },
       ]
     : [
         {
           id: "insights" as const,
           label: renderFileLabel(workspace.document.title, "insights.md"),
-          description: "Final output",
+          description: "Summary",
         },
         {
           id: "evidence" as const,
           label: renderFileLabel(workspace.document.title, "evidence.txt"),
-          description: "Supporting excerpts",
+          description: "Evidence",
         },
       ];
 
@@ -774,7 +767,7 @@ export function DocumentWorkspaceView({
             body: userPrompt,
           });
 
-          setSaveMessage("Notebook updated with your note.");
+          setSaveMessage("Notes updated with your note.");
           setHelperMessage("Saved your note. You can keep writing or ask another question.");
         } catch {
           setHelperMessage("The note could not be saved right now. Try again in a moment.");
@@ -785,8 +778,7 @@ export function DocumentWorkspaceView({
     }
 
     if (selectedTool === "deep-research") {
-      setRailMode("sources");
-      setWorkspaceView("files");
+      setSidebarPanel("sources");
       setSupportingQuotes([]);
       setHelperMessage(
         "Running Deep Research with OpenRouter and ranking external literature...",
@@ -815,7 +807,7 @@ export function DocumentWorkspaceView({
       return;
     }
 
-    setRailMode("chat");
+    setSidebarPanel("chat");
     setHelperMessage("Searching the document and grounding the answer in retrieved pages...");
 
     startSending(async () => {
@@ -906,168 +898,253 @@ export function DocumentWorkspaceView({
   }, [autoRunInitialPrompt, initialMode, initialPrompt]);
 
   const activeFile = outputFiles.find((file) => file.id === selectedFile) ?? outputFiles[0];
+  const activeTool = composerTools.find((item) => item.id === selectedTool) ?? composerTools[0];
   const suggestionItems = hasDeepResearchResult
     ? deepResearchResult.relatedQuestions
     : [
-        "Search for papers I can cite alongside this document",
-        "Generate a comprehensive report from this document",
+        "Find papers I can cite alongside this document",
+        "Create a simple summary of this document",
       ];
+  const deepResearchStarters = [
+    "Use Deep Research to find related studies this paper should be compared with.",
+    "Identify the main research gaps that still remain after reading this document.",
+    "Find recent papers that support or challenge the core argument of this document.",
+  ];
+  const activeFileDescription =
+    selectedFile === "insights"
+      ? hasDeepResearchResult
+        ? "Readable deep-research report"
+        : "Simple summary and key takeaways"
+      : hasDeepResearchResult
+        ? "Ranked papers and citation notes"
+        : "Grounded evidence from the PDF";
 
   return (
     <div className="min-h-screen bg-[#f7f7f8] text-[#101522]">
-      <div className="grid min-h-screen xl:grid-cols-[48px_minmax(280px,1.05fr)_210px_minmax(0,1.65fr)]">
-        <aside className="border-b border-[#e6e9ef] bg-[#fbfbfc] xl:border-b-0 xl:border-r">
-          <div className="flex items-center gap-2 overflow-x-auto px-3 py-3 xl:flex-col xl:items-center xl:gap-3 xl:overflow-visible xl:px-2 xl:py-4">
-            {railItems.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => {
-                  if (item.id === "library") {
-                    setWorkspaceView("files");
-                  }
-
-                  if (item.id === "notes") {
-                    setSelectedFile("evidence");
-                  }
-
-                  if (item.id === "search" || item.id === "cite") {
-                    focusComposerWithPrompt("Find claims in this paper that need stronger support.");
-                  }
-
-                  if (item.id === "review") {
-                    setRailMode("chat");
-                  }
-                }}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-transparent text-[13px] font-medium text-[#4e596d] transition-colors hover:border-[#d7dde7] hover:bg-white"
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-        </aside>
-
-        <section className="border-r border-[#e6e9ef] bg-white">
-          <div className="flex items-center justify-between border-b border-[#e9edf3] px-4 py-3">
-            <div className="truncate text-sm font-medium text-[#172132]">
+      <div className="mx-auto flex min-h-screen max-w-[1800px] flex-col xl:grid xl:grid-cols-[360px_minmax(0,1fr)]">
+        <section className="border-b border-[#e6e9ef] bg-white xl:border-b-0 xl:border-r">
+          <div className="border-b border-[#e9edf3] px-5 py-4">
+            <div className="truncate text-base font-semibold text-[#172132]">
               {workspace.document.title}
             </div>
-            <div className="text-xs text-[#8b93a1]">Activity</div>
-          </div>
+            <p className="mt-1 text-sm leading-6 text-[#667084]">
+              One place to ask questions, inspect sources, and switch between your
+              generated outputs.
+            </p>
 
-          <div className="max-h-[calc(100vh-230px)] space-y-6 overflow-y-auto px-5 py-5">
-            <div className="flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-[#7f8796]">
-              <button
-                type="button"
-                onClick={() => setRailMode("sources")}
-                className={`rounded-full px-3 py-1 ${
-                  railMode === "sources" ? "bg-[#f2f5fb] text-[#111727]" : ""
-                }`}
-              >
-                Sources
-              </button>
-              <button
-                type="button"
-                onClick={() => setRailMode("chat")}
-                className={`rounded-full px-3 py-1 ${
-                  railMode === "chat" ? "bg-[#f2f5fb] text-[#111727]" : ""
-                }`}
-              >
-                Chat
-              </button>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {[
+                { id: "chat", label: "Ask" },
+                { id: "sources", label: "Citations" },
+                { id: "files", label: "Outputs" },
+              ].map((panel) => (
+                <button
+                  key={panel.id}
+                  type="button"
+                  onClick={() => setSidebarPanel(panel.id as SidebarPanel)}
+                  className={`rounded-full px-3 py-1.5 text-sm transition-colors ${
+                    sidebarPanel === panel.id
+                      ? "bg-[#eef3fd] font-medium text-[#111727]"
+                      : "text-[#6b7483] hover:bg-[#f6f8fb]"
+                  }`}
+                >
+                  {panel.label}
+                </button>
+              ))}
             </div>
 
-            {railMode === "sources" ? (
-              hasDeepResearchResult && deepResearchResult ? (
-                <DeepResearchSourcesList
-                  result={deepResearchResult}
-                  focusedPaperId={focusedPaperId}
-                  onSelectPaper={(paperId) => {
-                    setFocusedPaperId(paperId);
-                    setSelectedFile("evidence");
-                  }}
-                />
-              ) : (
-                <EvidenceReferenceList
-                  pages={workspace.pages}
-                  onSelectPage={(pageNumber) => {
-                    setFocusedPageNumber(pageNumber);
-                    setSelectedFile("evidence");
-                  }}
-                  activePage={focusedPageNumber}
-                />
-              )
-            ) : (
-              <ConversationList messages={messages} />
-            )}
+            <div className="mt-4">
+              <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#7e8795]">
+                Assistant Mode
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {composerTools.map((tool) => (
+                  <button
+                    key={tool.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedTool(tool.id);
+                      setHelperMessage(tool.helper);
+                      if (tool.id === "notes") {
+                        setSidebarPanel("files");
+                      }
+                    }}
+                    className={`rounded-full px-3 py-1.5 text-sm transition-colors ${
+                      selectedTool === tool.id
+                        ? "bg-[#111727] font-medium text-white"
+                        : "border border-[#d8dee7] text-[#667084] hover:bg-[#f7f8fb]"
+                    }`}
+                  >
+                    {tool.label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-            {hasDeepResearchResult && deepResearchResult ? (
+            <div className="mt-4 flex flex-wrap gap-2 text-xs text-[#627086]">
+              <span className="rounded-full bg-[#f6f8fb] px-3 py-1.5">
+                {hasDeepResearchResult && deepResearchResult
+                  ? `${deepResearchResult.papers.length} ranked papers`
+                  : `${workspace.document.pageCount} pages extracted`}
+              </span>
+              <span className="rounded-full bg-[#f6f8fb] px-3 py-1.5">
+                Tool: {activeTool.label}
+              </span>
+              <span className="rounded-full bg-[#f6f8fb] px-3 py-1.5">
+                Viewing: {activeFile.description}
+              </span>
+            </div>
+          </div>
+
+          <div className="max-h-[calc(100vh-360px)] space-y-5 overflow-y-auto px-5 py-5">
+            {selectedTool === "deep-research" && !hasDeepResearchResult ? (
               <div className="rounded-[1.2rem] border border-[#d9dee7] bg-[#fbfcfe] p-4">
                 <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7e8795]">
-                  Deep research summary
+                  Deep Research is ready
                 </div>
                 <p className="mt-3 text-sm leading-7 text-[#293444]">
-                  {deepResearchResult.searchSummary}
+                  ResearchForge can use this document as a starting point, search
+                  for related literature through OpenRouter, rank the best papers,
+                  and generate a broader research report.
                 </p>
-              </div>
-            ) : supportingQuotes.length > 0 ? (
-              <div className="rounded-[1.2rem] border border-[#d9dee7] bg-[#fbfcfe] p-4">
-                <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7e8795]">
-                  Last supporting excerpts
-                </div>
-                <div className="mt-3 space-y-2 text-sm leading-7 text-[#293444]">
-                  {supportingQuotes.map((quote) => (
-                    <p key={quote}>{quote}</p>
+                <div className="mt-4 space-y-2">
+                  {deepResearchStarters.map((starter) => (
+                    <button
+                      key={starter}
+                      type="button"
+                      onClick={() => focusComposerWithPrompt(starter)}
+                      className="block w-full rounded-xl border border-[#e3e7ee] bg-white px-3 py-3 text-left text-sm text-[#243042] hover:bg-[#f7f9fd]"
+                    >
+                      {starter}
+                    </button>
                   ))}
                 </div>
               </div>
             ) : null}
 
-            <div className="space-y-3">
-              {outputFiles.map((file) => (
-                <OutputFileCard
-                  key={file.id}
-                  label={file.label}
-                  description={file.description}
-                  isActive={selectedFile === file.id}
-                  onClick={() => setSelectedFile(file.id)}
+            {sidebarPanel === "sources" ? (
+              <>
+                {hasDeepResearchResult && deepResearchResult ? (
+                  <DeepResearchSourcesList
+                    result={deepResearchResult}
+                    focusedPaperId={focusedPaperId}
+                    onSelectPaper={(paperId) => {
+                      setFocusedPaperId(paperId);
+                      setSelectedFile("evidence");
+                    }}
+                  />
+                ) : (
+                  <EvidenceReferenceList
+                    pages={workspace.pages}
+                    onSelectPage={(pageNumber) => {
+                      setFocusedPageNumber(pageNumber);
+                      setSelectedFile("evidence");
+                    }}
+                    activePage={focusedPageNumber}
+                  />
+                )}
+
+                {hasDeepResearchResult && deepResearchResult ? (
+                  <div className="rounded-[1.2rem] border border-[#d9dee7] bg-[#fbfcfe] p-4">
+                    <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7e8795]">
+                      Citation overview
+                    </div>
+                    <p className="mt-3 text-sm leading-7 text-[#293444]">
+                      {deepResearchResult.searchSummary}
+                    </p>
+                  </div>
+                ) : supportingQuotes.length > 0 ? (
+                  <div className="rounded-[1.2rem] border border-[#d9dee7] bg-[#fbfcfe] p-4">
+                    <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7e8795]">
+                      Last supporting excerpts
+                    </div>
+                    <div className="mt-3 space-y-2 text-sm leading-7 text-[#293444]">
+                      {supportingQuotes.map((quote) => (
+                        <p key={quote}>{quote}</p>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </>
+            ) : sidebarPanel === "files" ? (
+              <div className="space-y-5">
+                <input
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                  placeholder="Search outputs"
+                  className="w-full rounded-xl border border-[#d7ddea] bg-white px-3 py-2 text-sm text-[#1a2433] outline-none placeholder:text-[#9aa2ae]"
                 />
-              ))}
-            </div>
 
-            <Suggestions
-              items={suggestionItems}
-              onSelect={(value) => {
-                if (hasDeepResearchResult) {
-                  setSelectedTool("deep-research");
-                }
-                focusComposerWithPrompt(value);
-              }}
-            />
+                <div className="space-y-3">
+                  {filteredFiles.map((file) => (
+                    <OutputFileCard
+                      key={file.id}
+                      label={file.label}
+                      description={file.description}
+                      isActive={selectedFile === file.id}
+                      onClick={() => setSelectedFile(file.id)}
+                    />
+                  ))}
+                  {filteredFiles.length === 0 ? (
+                    <div className="rounded-[1rem] border border-dashed border-[#d7dde8] bg-[#fbfcfe] px-3 py-4 text-sm text-[#6f7988]">
+                      No outputs matched your search.
+                    </div>
+                  ) : null}
+                </div>
 
-            <div className="flex items-center gap-4 border-t border-[#eceff4] pt-4 text-sm text-[#5d6778]">
-              <button
-                type="button"
-                onClick={() => setWorkspaceView("files")}
-                className="font-medium text-[#111727]"
-              >
-                All Files
-              </button>
-              <button
-                type="button"
-                onClick={() => setFeedback("up")}
-                className={feedback === "up" ? "text-[#111727]" : ""}
-              >
-                Like
-              </button>
-              <button
-                type="button"
-                onClick={() => setFeedback("down")}
-                className={feedback === "down" ? "text-[#111727]" : ""}
-              >
-                Dislike
-              </button>
-            </div>
+                <div className="rounded-[1.2rem] border border-[#d9dee8] bg-[#fbfcfe] p-4 text-sm leading-7 text-[#293444]">
+                  <div className="font-semibold text-[#111727]">Current workspace</div>
+                  <div className="mt-2">Source file: {workspace.document.sourceFileName}</div>
+                  <div>Active file: {activeFile.label}</div>
+                  <div>
+                    {hasDeepResearchResult && deepResearchResult
+                      ? `Model used: ${deepResearchResult.model}`
+                      : `Messages in thread: ${messages.length}`}
+                  </div>
+                  {saveMessage ? <div className="mt-2 text-[#2158d4]">{saveMessage}</div> : null}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleDownloadBundle}
+                  className="inline-flex w-full items-center justify-center rounded-xl border border-[#d7dde7] px-4 py-2.5 text-sm font-medium text-[#111727] transition-colors hover:bg-[#f7f8fb]"
+                >
+                  Download all files
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-5">
+                <ConversationList messages={messages} />
+
+                {supportingQuotes.length > 0 ? (
+                  <div className="rounded-[1.2rem] border border-[#d9dee7] bg-[#fbfcfe] p-4">
+                    <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7e8795]">
+                      Last supporting excerpts
+                    </div>
+                    <div className="mt-3 space-y-2 text-sm leading-7 text-[#293444]">
+                      {supportingQuotes.map((quote) => (
+                        <p key={quote}>{quote}</p>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                <div>
+                  <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#7e8795]">
+                    Try next
+                  </div>
+                  <Suggestions
+                    items={suggestionItems}
+                    onSelect={(value) => {
+                      if (hasDeepResearchResult) {
+                        setSelectedTool("deep-research");
+                      }
+                      focusComposerWithPrompt(value);
+                    }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="border-t border-[#e9edf3] bg-[#fbfbfc] px-4 py-4">
@@ -1081,8 +1158,7 @@ export function DocumentWorkspaceView({
               onToolChange={(tool) => {
                 setSelectedTool(tool);
                 if (tool === "notes") {
-                  setSelectedFile("evidence");
-                  setHelperMessage("Notebook mode selected. Save the current output when ready.");
+                  setHelperMessage("Notes mode selected. Save your current view when ready.");
                 } else {
                   setHelperMessage(
                     composerTools.find((item) => item.id === tool)?.helper ??
@@ -1097,145 +1173,52 @@ export function DocumentWorkspaceView({
               }
               helperMessage={helperMessage}
               inputRef={composerRef}
+              placeholder={activeTool.placeholder}
             />
-          </div>
-        </section>
-
-        <section className="border-r border-[#e6e9ef] bg-[#fbfbfc]">
-          <div className="border-b border-[#e9edf3] px-4 py-3">
-            <div className="flex gap-2 text-sm">
-              <button
-                type="button"
-                onClick={() => setWorkspaceView("activity")}
-                className={`rounded-xl px-3 py-1.5 ${
-                  workspaceView === "activity"
-                    ? "bg-white font-medium text-[#111727]"
-                    : "text-[#6d7686]"
-                }`}
-              >
-                Live Activity
-              </button>
-              <button
-                type="button"
-                onClick={() => setWorkspaceView("files")}
-                className={`rounded-xl px-3 py-1.5 ${
-                  workspaceView === "files"
-                    ? "bg-white font-medium text-[#111727]"
-                    : "text-[#6d7686]"
-                }`}
-              >
-                All Files
-              </button>
-            </div>
-          </div>
-
-          <div className="border-b border-[#edf0f4] px-4 py-3">
-            <input
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder="Search Files"
-              className="w-full rounded-xl border border-[#d7ddea] bg-white px-3 py-2 text-sm text-[#1a2433] outline-none placeholder:text-[#9aa2ae]"
-            />
-          </div>
-
-          <div className="max-h-[calc(100vh-220px)] overflow-y-auto px-4 py-4">
-            {workspaceView === "files" ? (
-              <div className="space-y-5">
-                <div>
-                  <div className="flex items-center justify-between text-sm font-medium text-[#4b5567]">
-                    <span>Final Outputs</span>
-                    <span>v</span>
-                  </div>
-                  <div className="mt-3 space-y-2">
-                    {filteredFiles.map((file) => (
-                      <OutputFileCard
-                        key={file.id}
-                        label={file.label}
-                        description={file.description}
-                        isActive={selectedFile === file.id}
-                        onClick={() => setSelectedFile(file.id)}
-                      />
-                    ))}
-                    {filteredFiles.length === 0 ? (
-                      <div className="rounded-[1rem] border border-dashed border-[#d7dde8] bg-white px-3 py-4 text-sm text-[#6f7988]">
-                        No files matched your search.
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between text-sm font-medium text-[#4b5567]">
-                    <span>All Files</span>
-                    <span>{">"}</span>
-                  </div>
-                  <div className="mt-3 rounded-[1rem] border border-[#e1e6ef] bg-white px-3 py-3 text-sm leading-7 text-[#5f6978]">
-                    Source: {workspace.document.sourceFileName}
-                    <br />
-                    {hasDeepResearchResult && deepResearchResult
-                      ? `Ranked papers: ${deepResearchResult.papers.length}`
-                      : `Pages extracted: ${workspace.document.pageCount}`}
-                    <br />
-                    Active report: {activeFile.label}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="rounded-[1rem] border border-[#d9dee8] bg-white px-3 py-3 text-sm leading-7 text-[#263142]">
-                  Current tool: {composerTools.find((item) => item.id === selectedTool)?.label}
-                </div>
-                <div className="rounded-[1rem] border border-[#d9dee8] bg-white px-3 py-3 text-sm leading-7 text-[#263142]">
-                  {hasDeepResearchResult && deepResearchResult
-                    ? `Ranked papers: ${deepResearchResult.papers.length}`
-                    : `Messages in thread: ${messages.length}`}
-                </div>
-                <div className="rounded-[1rem] border border-[#d9dee8] bg-white px-3 py-3 text-sm leading-7 text-[#263142]">
-                  {hasDeepResearchResult && deepResearchResult
-                    ? `Model used: ${deepResearchResult.model}`
-                    : `Pages retrieved: ${pageCount}`}
-                </div>
-                <div className="rounded-[1rem] border border-[#d9dee8] bg-white px-3 py-3 text-sm leading-7 text-[#263142]">
-                  {hasDeepResearchResult && deepResearchResult
-                    ? `Searches run: ${deepResearchResult.searchQueries.join(" -> ")}`
-                    : saveMessage || "Notebook has not been updated yet."}
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="border-t border-[#e9edf3] bg-white px-4 py-4">
-            <button
-              type="button"
-              onClick={handleDownloadBundle}
-              className="inline-flex w-full items-center justify-center rounded-xl border border-[#d7dde7] px-4 py-2.5 text-sm font-medium text-[#111727] transition-colors hover:bg-[#f7f8fb]"
-            >
-              Download All Files
-            </button>
           </div>
         </section>
 
         <section className="min-w-0 bg-white">
-          <div className="flex items-center justify-between border-b border-[#e9edf3] px-5 py-3">
-            <div className="truncate text-sm font-medium text-[#172132]">
-              {activeFile.label}
-            </div>
-            <div className="flex items-center gap-3 text-sm">
-              <button
-                type="button"
-                onClick={handleDownloadBundle}
-                className="text-[#6d7686] hover:text-[#111727]"
-              >
-                Download
-              </button>
-              <button
-                type="button"
-                onClick={handleNotebookSave}
-                disabled={isSaving}
-                className="rounded-xl border border-[#d8dee7] px-3 py-2 text-[#111727] transition-colors hover:bg-[#f7f8fb] disabled:cursor-not-allowed disabled:opacity-70"
-              >
-                {isSaving ? "Saving..." : "Save to Notebook"}
-              </button>
+          <div className="border-b border-[#e9edf3] px-5 py-4 sm:px-7 xl:px-8">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="min-w-0">
+                <div className="truncate text-sm font-medium text-[#172132]">
+                  {activeFile.label}
+                </div>
+                <div className="mt-1 text-sm text-[#667084]">{activeFileDescription}</div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                {outputFiles.map((file) => (
+                  <button
+                    key={file.id}
+                    type="button"
+                    onClick={() => setSelectedFile(file.id)}
+                    className={`rounded-full px-3 py-2 text-sm transition-colors ${
+                      selectedFile === file.id
+                        ? "bg-[#eef3fd] font-medium text-[#111727]"
+                        : "border border-[#d8dee7] text-[#667084] hover:bg-[#f7f8fb]"
+                    }`}
+                  >
+                    {file.description}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={handleDownloadBundle}
+                  className="rounded-xl border border-[#d8dee7] px-3 py-2 text-sm text-[#6d7686] transition-colors hover:bg-[#f7f8fb] hover:text-[#111727]"
+                >
+                  Download
+                </button>
+                <button
+                  type="button"
+                  onClick={handleNotebookSave}
+                  disabled={isSaving}
+                  className="rounded-xl border border-[#d8dee7] px-3 py-2 text-sm text-[#111727] transition-colors hover:bg-[#f7f8fb] disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  {isSaving ? "Saving..." : "Save to Notes"}
+                </button>
+              </div>
             </div>
           </div>
 

@@ -3,11 +3,11 @@ import type { Metadata } from "next";
 import { UploadDocumentForm } from "@/components/forms/upload-document-form";
 import { WorkspaceShell } from "@/components/app-shell/workspace-shell";
 import { getWorkspaceViewer } from "@/lib/auth/dal";
-import { getBillingSnapshot, getDocumentsForUser } from "@/lib/db/queries";
+import { getDocumentsForUser } from "@/lib/db/queries";
 import { isDatabaseConfigured } from "@/lib/env";
 
 export const metadata: Metadata = {
-  title: "Documents",
+  title: "My Papers",
 };
 
 function getParam(
@@ -23,127 +23,19 @@ function getParam(
   return value ?? "";
 }
 
-function getModeDetails(mode: string) {
-  switch (mode) {
-    case "agent-gallery":
-      return {
-        title: "Agent gallery workflow",
-        description:
-          "Use this starter prompt to decide which ResearchForge workflow fits your task before you open a paper.",
-      };
-    case "ai-writer":
-      return {
-        title: "AI writer workflow",
-        description:
-          "Start from an uploaded paper and turn its evidence into a clearer academic draft with simpler explanations.",
-      };
-    case "write-draft":
-      return {
-        title: "Draft workflow",
-        description:
-          "Use the starter prompt below to begin outlining a thesis section or paper draft from one of your uploaded PDFs.",
-      };
-    case "generate-diagram":
-      return {
-        title: "Diagram workflow",
-        description:
-          "Open a paper and turn its model, variables, or process into a diagram-ready breakdown.",
-      };
-    case "extract-data":
-      return {
-        title: "Data extraction workflow",
-        description:
-          "Use the starter prompt to pull out methods, variables, samples, and findings from a paper.",
-      };
-    case "paraphraser":
-      return {
-        title: "Paraphrasing workflow",
-        description:
-          "Open a paper and restate complex academic language in simpler wording while staying faithful to the source.",
-      };
-    case "write-report":
-      return {
-        title: "Report workflow",
-        description:
-          "Start from an uploaded paper and turn the evidence into a structured report or write-up.",
-      };
-    case "word-document":
-      return {
-        title: "Word document workflow",
-        description:
-          "Launch into a Word-ready outline built from the content of your uploaded research paper.",
-      };
-    case "ppt-presentation":
-      return {
-        title: "Presentation workflow",
-        description:
-          "Use the starter prompt to turn one paper into slides, bullet points, and speaking notes.",
-      };
-    case "latex-manuscript":
-      return {
-        title: "LaTeX manuscript workflow",
-        description:
-          "Translate the document into a manuscript structure with sections and figure placeholders.",
-      };
-    case "latex-poster":
-      return {
-        title: "LaTeX poster workflow",
-        description:
-          "Open a paper and condense it into a poster-friendly structure with concise findings.",
-      };
-    case "data-visualization":
-      return {
-        title: "Data visualization workflow",
-        description:
-          "Pull out the strongest results and convert them into chart and table ideas.",
-      };
-    case "pdf-report":
-      return {
-        title: "PDF report workflow",
-        description:
-          "Use an uploaded paper as the basis for a compact report with summary, findings, and references.",
-      };
-    case "website":
-      return {
-        title: "Website workflow",
-        description:
-          "Reshape a paper into website sections, summaries, and content blocks for publishing.",
-      };
-    case "infographic":
-      return {
-        title: "Infographic workflow",
-        description:
-          "Turn the key points and stats into a simple visual-story outline before designing.",
-      };
-    case "ai-detector":
-      return {
-        title: "AI detector workflow",
-        description:
-          "Use this prompt to review phrasing, tone, and sections that may need a more natural academic voice.",
-      };
-    default:
-      return null;
-  }
-}
-
-function StatCard({
-  label,
-  value,
-  hint,
+function FocusCard({
+  title,
+  body,
 }: {
-  label: string;
-  value: string;
-  hint: string;
+  title: string;
+  body: string;
 }) {
   return (
     <div className="rounded-[1.6rem] border border-[#dce4f2] bg-white p-5 shadow-[0_20px_40px_rgba(16,21,34,0.04)]">
       <div className="text-sm font-medium uppercase tracking-[0.16em] text-[#7d8798]">
-        {label}
+        {title}
       </div>
-      <div className="mt-3 text-3xl font-semibold tracking-[-0.05em] text-[#111727]">
-        {value}
-      </div>
-      <p className="mt-2 text-sm leading-6 text-[#6d7686]">{hint}</p>
+      <p className="mt-3 text-sm leading-7 text-[#556277]">{body}</p>
     </div>
   );
 }
@@ -156,59 +48,44 @@ export default async function DocumentsPage({
   const session = await getWorkspaceViewer();
   const params = await searchParams;
   const starterPrompt = getParam(params, "prompt");
-  const launchMode = getParam(params, "mode");
-  const modeDetails = getModeDetails(launchMode);
-
-  const [documents, billing] = await Promise.all([
-    getDocumentsForUser(session.id),
-    getBillingSnapshot(session.id),
-  ]);
-
+  const documents = await getDocumentsForUser(session.id);
   const uploadsDisabled = session.isDemo || !isDatabaseConfigured();
 
   return (
     <WorkspaceShell user={session} activePath="/documents">
       <section className="space-y-6">
-        {session.isDemo || uploadsDisabled ? (
+        {uploadsDisabled ? (
           <div className="rounded-[1.7rem] border border-[#cfe0fb] bg-[#eef5ff] px-5 py-4 text-sm leading-7 text-[#325078]">
-            {uploadsDisabled
-              ? "ResearchForge is running in preview mode. Add DATABASE_URL, OPENAI_API_KEY, Paystack keys, and run the migration to unlock real uploads and persistence."
-              : "You are exploring ResearchForge in demo mode. Sign up with a configured database to persist real documents and chat history."}
+            {session.isDemo
+              ? "You are exploring ResearchForge in demo mode. Sign in with a configured database to upload real papers and save your work."
+              : "Add DATABASE_URL and OPENAI_API_KEY, then run the migration to unlock real uploads and saved work."}
           </div>
         ) : null}
 
         {starterPrompt ? (
           <div className="rounded-[1.7rem] border border-[#e4dccf] bg-[#fbf7f1] px-5 py-4 text-sm leading-7 text-[#5d5348]">
             <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8c7f71]">
-              {modeDetails?.title ?? "Starter prompt"}
+              Starter prompt
             </div>
             <p className="mt-2">&quot;{starterPrompt}&quot;</p>
             <p className="mt-2 text-[#786d62]">
-              {modeDetails?.description ??
-                "Upload a paper or open one of your documents, then use this as your first grounded PDF question."}
+              Upload a paper or open one below, then use this as your first grounded question.
             </p>
           </div>
         ) : null}
 
         <div className="grid gap-4 lg:grid-cols-3">
-          <StatCard
-            label="Uploaded PDFs"
-            value={`${billing.uploadCount}`}
-            hint={
-              billing.uploadLimit === null
-                ? "Your Pro plan supports unlimited uploaded papers."
-                : `Your Free plan includes ${billing.uploadLimit} documents.`
-            }
+          <FocusCard
+            title="Upload papers"
+            body="Bring your PDFs into one place so you can ask questions and keep your research organized."
           />
-          <StatCard
-            label="Plan"
-            value={billing.plan.toUpperCase()}
-            hint="Upgrade to Pro for unlimited uploads and ongoing research threads."
+          <FocusCard
+            title="Ask clearly"
+            body="Open any paper to get direct answers, simple explanations, and page-backed responses."
           />
-          <StatCard
-            label="Chat allowance"
-            value={billing.questionLimit === null ? "Unlimited" : `${billing.questionLimit}/mo`}
-            hint="Every grounded answer must stay inside retrieved PDF context."
+          <FocusCard
+            title="Summarize and note"
+            body="Turn dense papers into summaries, then save the important takeaways into notes."
           />
         </div>
 
@@ -221,12 +98,12 @@ export default async function DocumentsPage({
                 Your papers
               </p>
               <h2 className="mt-2 text-2xl font-semibold tracking-[-0.05em] text-[#111727]">
-                Research documents with grounded chat
+                Uploaded PDFs ready for questions and summaries
               </h2>
             </div>
             <p className="max-w-[32rem] text-sm leading-6 text-[#6d7686]">
-              Each document stores extracted page text, page-based chunks, embeddings,
-              notes, summary sections, and chat history.
+              Each paper keeps its extracted text, grounded answers, summary output,
+              and saved notes together.
             </p>
           </div>
 

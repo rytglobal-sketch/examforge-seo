@@ -49,14 +49,14 @@ export default async function NotesPage({
     <WorkspaceShell user={session} activePath="/notes">
       <section className="rounded-[1.8rem] border border-[#dce4f2] bg-white p-5 shadow-[0_20px_40px_rgba(16,21,34,0.04)]">
         <p className="text-sm font-medium uppercase tracking-[0.16em] text-[#7d8798]">
-          Working notes
+          Notes
         </p>
         <h2 className="mt-2 text-2xl font-semibold tracking-[-0.05em] text-[#111727]">
-          Notes saved against your uploaded documents
+          Notes saved from your papers
         </h2>
         <p className="mt-3 max-w-[48rem] text-sm leading-7 text-[#6d7686]">
-          Use notes to keep literature review thoughts, definitions, synthesis ideas,
-          and future citation reminders attached to each paper.
+          Keep simple takeaways, useful definitions, writing reminders, and citation
+          ideas attached to each paper.
         </p>
 
         {starterPrompt ? (

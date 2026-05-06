@@ -130,10 +130,7 @@ function fallbackSummary(text: string, titleHint: string): SummaryDraft {
   };
 }
 
-function fallbackAnswer(
-  question: string,
-  chunks: DocumentChunkRecord[],
-): GroundedAnswer {
+function fallbackAnswer(chunks: DocumentChunkRecord[]): GroundedAnswer {
   const uniquePages = Array.from(new Set(chunks.map((chunk) => chunk.pageNumber)));
 
   if (chunks.length === 0) {
@@ -227,13 +224,13 @@ export async function answerFromDocumentContext(
   chunks: DocumentChunkRecord[],
 ) {
   if (chunks.length === 0 || !isOpenAIConfigured()) {
-    return fallbackAnswer(question, chunks);
+    return fallbackAnswer(chunks);
   }
 
   const client = getOpenAIClient();
 
   if (!client) {
-    return fallbackAnswer(question, chunks);
+    return fallbackAnswer(chunks);
   }
 
   const context = chunks
@@ -264,6 +261,6 @@ export async function answerFromDocumentContext(
     const payload = flattenContent(completion.choices[0]?.message?.content);
     return groundedAnswerSchema.parse(JSON.parse(payload));
   } catch {
-    return fallbackAnswer(question, chunks);
+    return fallbackAnswer(chunks);
   }
 }

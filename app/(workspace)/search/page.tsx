@@ -5,7 +5,7 @@ import type { LiteratureProvider } from "@/lib/db/types";
 import { searchLiterature, suggestPapersForClaim } from "@/lib/research/literature";
 
 export const metadata: Metadata = {
-  title: "Search",
+  title: "Citations",
 };
 
 function getParam(
@@ -24,43 +24,6 @@ function normalizeProvider(value: string): LiteratureProvider {
     return value;
   }
   return "openalex";
-}
-
-function getModeDetails(mode: string) {
-  switch (mode) {
-    case "find-topics":
-      return {
-        title: "Topic discovery workflow",
-        description:
-          "Use this search to explore emerging thesis directions, narrow your interests, and spot underexplored areas quickly.",
-      };
-    case "review-literature":
-      return {
-        title: "Literature review workflow",
-        description:
-          "Start broad, compare themes across papers, and narrow toward the research gaps most relevant to your thesis.",
-      };
-    case "systematic-review":
-      return {
-        title: "Systematic review workflow",
-        description:
-          "Use structured search terms, tighter scope, and repeatable screening logic to collect papers methodically.",
-      };
-    case "search-papers":
-      return {
-        title: "Paper discovery workflow",
-        description:
-          "Use this search as a starting point for finding strong candidate sources and refining your topic quickly.",
-      };
-    case "citation-generator":
-      return {
-        title: "Citation generator workflow",
-        description:
-          "Start from a draft claim, tighten the search language, and review likely source candidates before citing them.",
-      };
-    default:
-      return null;
-  }
 }
 
 function ResultCard({
@@ -117,8 +80,6 @@ export default async function SearchPage({
   const query = getParam(params, "query");
   const claim = getParam(params, "claim");
   const provider = normalizeProvider(getParam(params, "provider"));
-  const launchMode = getParam(params, "mode");
-  const modeDetails = getModeDetails(launchMode);
 
   const [results, claimSuggestion] = await Promise.all([
     query ? searchLiterature(query, provider) : Promise.resolve([]),
@@ -127,118 +88,124 @@ export default async function SearchPage({
 
   return (
     <WorkspaceShell user={session} activePath="/search">
-      <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <div className="space-y-6">
-          {modeDetails ? (
-            <div className="rounded-[1.7rem] border border-[#e4dccf] bg-[#fbf7f1] px-5 py-4 text-sm leading-7 text-[#5d5348]">
-              <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8c7f71]">
-                {modeDetails.title}
-              </div>
-              <p className="mt-2 text-[#786d62]">{modeDetails.description}</p>
-            </div>
-          ) : null}
-
-          <div className="rounded-[1.8rem] border border-[#dce4f2] bg-white p-5 shadow-[0_20px_40px_rgba(16,21,34,0.04)]">
-            <p className="text-sm font-medium uppercase tracking-[0.16em] text-[#7d8798]">
-              Literature search
-            </p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-[-0.05em] text-[#111727]">
-              Find papers and citation leads
-            </h2>
-            <p className="mt-3 text-sm leading-7 text-[#6d7686]">
-              Use OpenAlex, Semantic Scholar, or Crossref to find relevant papers
-              for a topic, question, or citation need.
-            </p>
-
-            <form className="mt-5 space-y-4">
-              <input
-                type="text"
-                name="query"
-                defaultValue={query}
-                placeholder="e.g. supervisor feedback and thesis completion"
-                className="w-full rounded-[1.4rem] border border-[#dce4f2] bg-[#f8fbff] px-4 py-4 text-sm text-[#111727] outline-none placeholder:text-[#8a95a8]"
-              />
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <select
-                  name="provider"
-                  defaultValue={provider}
-                  className="rounded-2xl border border-[#dce4f2] bg-white px-4 py-3 text-sm text-[#111727]"
-                >
-                  <option value="openalex">OpenAlex</option>
-                  <option value="semantic-scholar">Semantic Scholar</option>
-                  <option value="crossref">Crossref</option>
-                </select>
-                <button
-                  type="submit"
-                  className="inline-flex items-center justify-center rounded-2xl bg-[#1f6fff] px-5 py-3 text-sm font-semibold text-white"
-                >
-                  Search papers
-                </button>
-              </div>
-            </form>
-          </div>
-
-          <div className="space-y-4">
-            {results.length === 0 ? (
-              <div className="rounded-[1.6rem] border border-dashed border-[#cfdae9] bg-[#f8fbff] px-5 py-6 text-sm leading-7 text-[#556277]">
-                Search results will appear here once you run a literature query.
-              </div>
-            ) : (
-              results.map((result) => <ResultCard key={result.id} {...result} />)
-            )}
-          </div>
+      <section className="space-y-6">
+        <div className="rounded-[1.8rem] border border-[#dce4f2] bg-white p-5 shadow-[0_20px_40px_rgba(16,21,34,0.04)]">
+          <p className="text-sm font-medium uppercase tracking-[0.16em] text-[#7d8798]">
+            Citations
+          </p>
+          <h2 className="mt-2 text-2xl font-semibold tracking-[-0.05em] text-[#111727]">
+            Find papers you can cite
+          </h2>
+          <p className="mt-3 max-w-[48rem] text-sm leading-7 text-[#6d7686]">
+            Search by topic when you need sources, or paste a claim when you need
+            citation support for something you wrote.
+          </p>
         </div>
 
-        <div className="space-y-6">
-          <div className="rounded-[1.8rem] border border-[#dce4f2] bg-white p-5 shadow-[0_20px_40px_rgba(16,21,34,0.04)]">
-            <p className="text-sm font-medium uppercase tracking-[0.16em] text-[#7d8798]">
-              Citation helper
-            </p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-[-0.05em] text-[#111727]">
-              Turn a claim into papers you can cite
-            </h2>
-            <p className="mt-3 text-sm leading-7 text-[#6d7686]">
-              Type a claim from your draft and ResearchForge suggests a tighter
-              search query plus candidate papers to review before you cite them.
-            </p>
-
-            <form className="mt-5 space-y-4">
-              <textarea
-                name="claim"
-                defaultValue={claim}
-                placeholder="e.g. Structured note-taking improves source synthesis during thesis writing."
-                className="min-h-[180px] w-full rounded-[1.4rem] border border-[#dce4f2] bg-[#f8fbff] px-4 py-4 text-sm leading-7 text-[#111727] outline-none placeholder:text-[#8a95a8]"
-              />
-              <input type="hidden" name="provider" value={provider} />
-              <button
-                type="submit"
-                className="inline-flex items-center justify-center rounded-2xl bg-[#111727] px-5 py-3 text-sm font-semibold text-white"
-              >
-                Suggest citations
-              </button>
-            </form>
-          </div>
-
-          {claimSuggestion ? (
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+          <div className="space-y-6">
             <div className="rounded-[1.8rem] border border-[#dce4f2] bg-white p-5 shadow-[0_20px_40px_rgba(16,21,34,0.04)]">
-              <h3 className="text-xl font-semibold tracking-[-0.04em] text-[#111727]">
-                Suggested search
+              <p className="text-sm font-medium uppercase tracking-[0.16em] text-[#7d8798]">
+                Search by topic
+              </p>
+              <h3 className="mt-2 text-2xl font-semibold tracking-[-0.05em] text-[#111727]">
+                Find supporting papers
               </h3>
-              <p className="mt-3 rounded-[1.3rem] bg-[#f8fbff] px-4 py-3 text-sm leading-7 text-[#455066]">
-                {claimSuggestion.recommendedSearch}
+              <p className="mt-3 text-sm leading-7 text-[#6d7686]">
+                Use OpenAlex, Semantic Scholar, or Crossref to find papers related to a
+                topic, method, or research question.
               </p>
 
-              <div className="mt-5 space-y-4">
-                {claimSuggestion.papers.map((paper) => (
-                  <ResultCard key={paper.id} {...paper} />
-                ))}
+              <form className="mt-5 space-y-4">
+                <input
+                  type="text"
+                  name="query"
+                  defaultValue={query}
+                  placeholder="e.g. supervisor feedback and thesis completion"
+                  className="w-full rounded-[1.4rem] border border-[#dce4f2] bg-[#f8fbff] px-4 py-4 text-sm text-[#111727] outline-none placeholder:text-[#8a95a8]"
+                />
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <select
+                    name="provider"
+                    defaultValue={provider}
+                    className="rounded-2xl border border-[#dce4f2] bg-white px-4 py-3 text-sm text-[#111727]"
+                  >
+                    <option value="openalex">OpenAlex</option>
+                    <option value="semantic-scholar">Semantic Scholar</option>
+                    <option value="crossref">Crossref</option>
+                  </select>
+                  <button
+                    type="submit"
+                    className="inline-flex items-center justify-center rounded-2xl bg-[#1f6fff] px-5 py-3 text-sm font-semibold text-white"
+                  >
+                    Find papers
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <div className="space-y-4">
+              {results.length === 0 ? (
+                <div className="rounded-[1.6rem] border border-dashed border-[#cfdae9] bg-[#f8fbff] px-5 py-6 text-sm leading-7 text-[#556277]">
+                  Topic-based results will appear here after you run a search.
+                </div>
+              ) : (
+                results.map((result) => <ResultCard key={result.id} {...result} />)
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <div className="rounded-[1.8rem] border border-[#dce4f2] bg-white p-5 shadow-[0_20px_40px_rgba(16,21,34,0.04)]">
+              <p className="text-sm font-medium uppercase tracking-[0.16em] text-[#7d8798]">
+                Search by claim
+              </p>
+              <h3 className="mt-2 text-2xl font-semibold tracking-[-0.05em] text-[#111727]">
+                Match a sentence to possible citations
+              </h3>
+              <p className="mt-3 text-sm leading-7 text-[#6d7686]">
+                Paste a claim from your draft and ResearchForge will suggest a tighter
+                search query plus papers you can inspect before you cite them.
+              </p>
+
+              <form className="mt-5 space-y-4">
+                <textarea
+                  name="claim"
+                  defaultValue={claim}
+                  placeholder="e.g. Structured note-taking improves source synthesis during thesis writing."
+                  className="min-h-[180px] w-full rounded-[1.4rem] border border-[#dce4f2] bg-[#f8fbff] px-4 py-4 text-sm leading-7 text-[#111727] outline-none placeholder:text-[#8a95a8]"
+                />
+                <input type="hidden" name="provider" value={provider} />
+                <button
+                  type="submit"
+                  className="inline-flex items-center justify-center rounded-2xl bg-[#111727] px-5 py-3 text-sm font-semibold text-white"
+                >
+                  Find citation matches
+                </button>
+              </form>
+            </div>
+
+            {claimSuggestion ? (
+              <div className="rounded-[1.8rem] border border-[#dce4f2] bg-white p-5 shadow-[0_20px_40px_rgba(16,21,34,0.04)]">
+                <h3 className="text-xl font-semibold tracking-[-0.04em] text-[#111727]">
+                  Suggested search
+                </h3>
+                <p className="mt-3 rounded-[1.3rem] bg-[#f8fbff] px-4 py-3 text-sm leading-7 text-[#455066]">
+                  {claimSuggestion.recommendedSearch}
+                </p>
+
+                <div className="mt-5 space-y-4">
+                  {claimSuggestion.papers.map((paper) => (
+                    <ResultCard key={paper.id} {...paper} />
+                  ))}
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className="rounded-[1.6rem] border border-dashed border-[#cfdae9] bg-[#f8fbff] px-5 py-6 text-sm leading-7 text-[#556277]">
-              Citation suggestions will appear here after you submit a claim.
-            </div>
-          )}
+            ) : (
+              <div className="rounded-[1.6rem] border border-dashed border-[#cfdae9] bg-[#f8fbff] px-5 py-6 text-sm leading-7 text-[#556277]">
+                Citation suggestions will appear here after you paste a claim.
+              </div>
+            )}
+          </div>
         </div>
       </section>
     </WorkspaceShell>
