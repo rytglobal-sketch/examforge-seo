@@ -12,8 +12,8 @@ type WorkspaceShellProps = {
 const navigationItems = [
   {
     href: "/documents",
-    label: "Papers",
-    description: "Open papers, ask questions, and read summaries",
+    label: "Workspace",
+    description: "Start from questions, papers, and summaries",
   },
   {
     href: "/search",
@@ -84,7 +84,8 @@ export function WorkspaceShell({
                 What this assistant does
               </div>
               <ul className="mt-3 space-y-2 text-sm leading-6 text-[#667287]">
-                <li>Open papers and ask grounded questions page by page.</li>
+                <li>Start from a question, topic, claim, or paper.</li>
+                <li>Use sources when they help, not as the only starting point.</li>
                 <li>Explain dense academic language in simpler terms.</li>
                 <li>Generate summaries and save notes as you read.</li>
                 <li>Answer only from retrieved PDF chunks.</li>
@@ -132,7 +133,7 @@ export function WorkspaceShell({
                   Research workspace
                 </p>
                 <h1 className="mt-1 text-2xl font-semibold tracking-[-0.05em] text-[#111727]">
-                  Ask questions, understand papers, and cite sources faster
+                  Ask questions, understand research, and cite sources faster
                 </h1>
               </div>
 

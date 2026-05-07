@@ -5,7 +5,7 @@ import { getWorkspaceViewer } from "@/lib/auth/dal";
 import { getDocumentsForUser } from "@/lib/db/queries";
 
 export const metadata: Metadata = {
-  title: "Papers",
+  title: "Research Workspace",
 };
 
 function getParam(
@@ -37,14 +37,15 @@ export default async function DocumentsPage({
       <section className="space-y-6">
         <div className="rounded-[1.8rem] border border-[#dce4f2] bg-white p-6 shadow-[0_22px_46px_rgba(16,21,34,0.04)]">
           <p className="text-sm font-medium uppercase tracking-[0.16em] text-[#7d8798]">
-            Papers
+            Research workspace
           </p>
           <h2 className="mt-2 text-2xl font-semibold tracking-[-0.05em] text-[#111727]">
-            Start with a paper and ask what you need
+            Start with a question, a source, or a sample workspace
           </h2>
           <p className="mt-3 max-w-[46rem] text-sm leading-7 text-[#6d7686]">
-            Open a paper to ask questions, get simple explanations, read a summary,
-            save notes, or find citations related to what you are reading.
+            Begin with a sample paper, a research question, or a citation task.
+            ResearchForge helps you explain, summarize, save notes, and find sources
+            as you work.
           </p>
 
           {starterPrompt ? (
@@ -59,7 +60,7 @@ export default async function DocumentsPage({
 
         {session.isDemo && featuredDocument ? (
           <div className="rounded-[1.7rem] border border-[#cfe0fb] bg-[#eef5ff] px-5 py-4 text-sm leading-7 text-[#325078]">
-            Demo mode is ready. Start with the sample paper below, then ask questions,
+            Demo mode is ready. Start with the sample workspace below, ask a question,
             read the summary, or use it to find citations.
           </div>
         ) : null}
@@ -72,7 +73,7 @@ export default async function DocumentsPage({
                   Start here
                 </p>
                 <h2 className="mt-2 text-2xl font-semibold tracking-[-0.05em] text-[#111727]">
-                  Open the sample paper
+                  Open the sample research workspace
                 </h2>
               </div>
               <div className="flex flex-wrap gap-2 text-xs text-[#5f6978]">

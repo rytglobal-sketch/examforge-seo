@@ -10,7 +10,7 @@ import { demoDocument } from "@/lib/mock-data";
 export const metadata: Metadata = {
   title: "ResearchForge",
   description:
-    "An AI PDF research assistant for students to upload papers, ask questions, get simple explanations, generate summaries, create notes, and find citations.",
+    "An AI research assistant for students to ask questions, get simple explanations, generate summaries, create notes, and find citations.",
 };
 
 type NavItem = {
@@ -75,22 +75,22 @@ const citationHelperHref = withParams("/search", {
 
 const sidebarItems: NavItem[] = [
   { label: "Home", href: "/", icon: "home" },
-  { label: "My Papers", href: "/documents", icon: "library" },
-  { label: "Ask PDF", href: askPdfHref, icon: "pdf" },
+  { label: "Workspace", href: "/documents", icon: "library" },
+  { label: "Ask Questions", href: askPdfHref, icon: "pdf" },
   { label: "Find Citations", href: citationHelperHref, icon: "cite" },
   { label: "Notes", href: "/notes", icon: "notebook", hasChevron: true },
 ];
 
 const taskColumns: LandingTaskColumn[] = [
   {
-    title: "START WITH YOUR PAPER",
+    title: "START WITH YOUR RESEARCH",
     items: [
       {
-        label: "Upload a Paper",
+        label: "Open Workspace",
         href: "/documents",
         accent: "bg-[#eef3ff]",
         textColor: "text-[#2b67ff]",
-        symbol: "UP",
+        symbol: "WS",
       },
       {
         label: "Ask a Question",
@@ -100,7 +100,7 @@ const taskColumns: LandingTaskColumn[] = [
         symbol: "AQ",
         toolId: "chat-with-pdf",
         promptTemplate:
-          "Answer this question from my uploaded paper: ________. Use only the paper, explain the answer simply, and include page citations.",
+          "Help me answer this research question: ________. If the answer depends on a source, explain it simply and include supporting citations.",
       },
       {
         label: "Explain Simply",
@@ -110,7 +110,7 @@ const taskColumns: LandingTaskColumn[] = [
         symbol: "ES",
         toolId: "chat-with-pdf",
         promptTemplate:
-          "Explain this paper in simple terms. Focus on ________ and point me to the pages that support the explanation.",
+          "Explain ________ in simple academic language. If you use a source, point me to the parts that support the explanation.",
       },
       {
         label: "Generate Summary",
@@ -120,12 +120,12 @@ const taskColumns: LandingTaskColumn[] = [
         symbol: "GS",
         toolId: "chat-with-pdf",
         promptTemplate:
-          "Summarize this paper on ________. Include a simple summary, key findings, methodology, limitations, and important definitions with page citations.",
+          "Generate a clear summary of ________. Include the main points, key findings, methods, limitations, and important terms with supporting citations when available.",
       },
     ],
   },
   {
-    title: "WORK WITH YOUR SOURCES",
+    title: "WORK WITH IDEAS AND SOURCES",
     items: [
       {
         label: "Create Notes",
@@ -295,7 +295,7 @@ export default function HomePage() {
               className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[#ddd5cb] bg-white px-4 py-3 text-[0.98rem] font-medium text-[#1b1815] shadow-[0_4px_10px_rgba(120,104,80,0.04)]"
             >
               <NavIcon name="plus" />
-              Upload Paper
+              Open Workspace
             </Link>
           </div>
 
@@ -330,7 +330,7 @@ export default function HomePage() {
               href="/documents"
               className="inline-flex h-10 items-center justify-center rounded-xl border border-[#ddd5cb] bg-white px-4 text-[0.92rem] font-medium text-[#4f463f]"
             >
-              Upload Paper
+              Workspace
             </Link>
             <Link
               href={citationHelperHref}
@@ -345,11 +345,10 @@ export default function HomePage() {
             <div className="mx-auto max-w-[1080px] pt-8 lg:pt-10">
               <header className="mx-auto max-w-[760px] text-center">
                 <h1 className="text-[2.15rem] font-semibold tracking-[-0.06em] text-[#0f0d0b] sm:text-[3rem]">
-                  AI PDF research help for students
+                  AI research help for students
                 </h1>
                 <p className="mx-auto mt-4 max-w-[660px] text-[1.02rem] leading-7 text-[#6f6459]">
-                  Upload papers, ask questions, get simple explanations, generate
-                  summaries, create notes, and find citations without the extra clutter.
+                  Start from a question, a topic, a claim, or a paper. ResearchForge helps you explain, summarize, organize notes, and find citations without the extra clutter.
                 </p>
               </header>
 

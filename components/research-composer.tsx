@@ -35,8 +35,8 @@ type QuickAction = {
 const toolOptions: ComposerTool[] = [
   {
     id: "chat-with-pdf",
-    label: "Ask PDF",
-    description: "Open a paper and carry your question into grounded chat.",
+    label: "Ask Questions",
+    description: "Open the workspace and carry your question into grounded chat.",
     href: "/documents",
     queryKey: "prompt",
   },
@@ -59,8 +59,8 @@ const toolOptions: ComposerTool[] = [
 const quickActions: QuickAction[] = [
   {
     id: "upload-pdf",
-    label: "My Papers",
-    description: "Open your paper library and upload a PDF.",
+    label: "Open Workspace",
+    description: "Go to the main research workspace and sample paper.",
     href: "/documents",
   },
   {
@@ -72,7 +72,7 @@ const quickActions: QuickAction[] = [
   {
     id: "open-notes",
     label: "Open Notes",
-    description: "Review notes attached to your uploaded papers.",
+    description: "Review notes attached to your research work.",
     href: "/notes",
   },
 ];

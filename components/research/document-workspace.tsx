@@ -25,6 +25,10 @@ type DocumentWorkspaceProps = {
 type WorkspaceFileId = "insights" | "evidence";
 type ComposerTool = "deep-research" | "chat-with-pdf" | "notes";
 type SidebarPanel = "sources" | "chat" | "files";
+type PendingRequest = {
+  tool: ComposerTool;
+  prompt: string;
+};
 
 const composerTools: Array<{
   id: ComposerTool;
@@ -40,9 +44,9 @@ const composerTools: Array<{
   },
   {
     id: "chat-with-pdf",
-    label: "Ask PDF",
+    label: "Ask Questions",
     helper: "Ask a direct question and get a simple, page-backed answer.",
-    placeholder: "Ask a question about this PDF...",
+    placeholder: "Ask a question about this research...",
   },
   {
     id: "notes",
@@ -194,7 +198,25 @@ function buildDeepResearchPapersMarkdown(result: DeepResearchResult) {
   ].join("\n\n");
 }
 
-function ReferenceBadge({ label }: { label: string }) {
+function ReferenceBadge({
+  label,
+  onClick,
+}: {
+  label: string;
+  onClick?: () => void;
+}) {
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className="inline-flex items-center rounded-full border border-[#d9dee7] bg-white px-2 py-0.5 text-[11px] font-medium text-[#6d7584] transition-colors hover:border-[#b7c6dd] hover:bg-[#f7f9fd]"
+      >
+        {label}
+      </button>
+    );
+  }
+
   return (
     <span className="inline-flex items-center rounded-full border border-[#d9dee7] bg-white px-2 py-0.5 text-[11px] font-medium text-[#6d7584]">
       {label}
@@ -202,8 +224,138 @@ function ReferenceBadge({ label }: { label: string }) {
   );
 }
 
-function CitationBadge({ pageNumber }: { pageNumber: number }) {
-  return <ReferenceBadge label={String(pageNumber)} />;
+function CitationBadge({
+  pageNumber,
+  onClick,
+}: {
+  pageNumber: number;
+  onClick?: () => void;
+}) {
+  return <ReferenceBadge label={String(pageNumber)} onClick={onClick} />;
+}
+
+function getCitedPages(
+  pages: DocumentPageRecord[],
+  citations: number[],
+) {
+  const seen = new Set<number>();
+
+  return citations
+    .filter((pageNumber) => {
+      if (seen.has(pageNumber)) {
+        return false;
+      }
+
+      seen.add(pageNumber);
+      return true;
+    })
+    .map((pageNumber) => pages.find((page) => page.pageNumber === pageNumber))
+    .filter(Boolean) as DocumentPageRecord[];
+}
+
+function PageSourceList({
+  pages,
+  citations,
+  onSelectPage,
+}: {
+  pages: DocumentPageRecord[];
+  citations: number[];
+  onSelectPage: (pageNumber: number) => void;
+}) {
+  const citedPages = getCitedPages(pages, citations);
+
+  if (citedPages.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mt-4 space-y-3">
+      <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7e8795]">
+        Sources
+      </div>
+      {citedPages.map((page) => (
+        <button
+          key={page.id}
+          type="button"
+          onClick={() => onSelectPage(page.pageNumber)}
+          className="block w-full rounded-[1rem] border border-[#dfe5ee] bg-[#fbfcfe] px-4 py-3 text-left transition-colors hover:bg-white"
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold text-[#111727]">
+              Page {page.pageNumber}
+            </span>
+            <ReferenceBadge label="Open source" />
+          </div>
+          <div className="mt-2 text-sm font-medium text-[#243042]">
+            {inferPageHeading(page)}
+          </div>
+          <p className="mt-2 text-sm leading-7 text-[#556277]">
+            {trimText(page.textContent, 220)}
+          </p>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function PaperSourceList({
+  result,
+  paperIds,
+  onSelectPaper,
+}: {
+  result: DeepResearchResult;
+  paperIds: string[];
+  onSelectPaper: (paperId: string) => void;
+}) {
+  const uniquePaperIds = Array.from(new Set(paperIds));
+  const citedPapers = uniquePaperIds
+    .map((paperId) => result.papers.find((paper) => paper.id === paperId))
+    .filter((paper): paper is DeepResearchResult["papers"][number] => Boolean(paper));
+
+  if (citedPapers.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mt-4 space-y-3">
+      <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7e8795]">
+        Sources
+      </div>
+      {citedPapers.map((paper) => (
+        <div
+          key={paper.id}
+          className="rounded-[1rem] border border-[#dfe5ee] bg-[#fbfcfe] px-4 py-3"
+        >
+          <button
+            type="button"
+            onClick={() => onSelectPaper(paper.id)}
+            className="text-left"
+          >
+            <div className="text-sm font-semibold text-[#2158d4]">{paper.title}</div>
+          </button>
+          <div className="mt-1 text-sm text-[#556277]">
+            {paper.authors.join(", ") || "Unknown authors"}
+          </div>
+          <div className="mt-1 text-sm text-[#556277]">{paper.sourceLabel}</div>
+          <p className="mt-2 text-sm leading-7 text-[#4a5565]">{paper.reasoning}</p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <ReferenceBadge label={`${paper.relevanceScore}/100`} />
+            <ReferenceBadge label={paper.relevanceTag} />
+            {paper.url ? (
+              <a
+                href={paper.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center rounded-full border border-[#d9dee7] bg-white px-2 py-0.5 text-[11px] font-medium text-[#2158d4] transition-colors hover:bg-[#f7f9fd]"
+              >
+                Open source
+              </a>
+            ) : null}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 function EvidenceReferenceList({
@@ -276,10 +428,16 @@ function DeepResearchSourcesList({
 
 function ConversationList({
   messages,
+  pages,
+  onSelectPage,
+  pendingRequest,
 }: {
   messages: ChatMessageRecord[];
+  pages: DocumentPageRecord[];
+  onSelectPage: (pageNumber: number) => void;
+  pendingRequest: PendingRequest | null;
 }) {
-  if (messages.length === 0) {
+  if (messages.length === 0 && !pendingRequest) {
     return (
       <div className="rounded-[1.2rem] border border-dashed border-[#d8dee7] bg-[#fbfcfe] px-4 py-4 text-sm leading-7 text-[#637084]">
         Ask a grounded question about this paper and ResearchForge will answer
@@ -307,16 +465,109 @@ function ConversationList({
             >
               <div className="whitespace-pre-wrap">{message.content}</div>
               {!isUser && message.citations.length > 0 ? (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {message.citations.map((citation) => (
-                    <CitationBadge key={`${message.id}-${citation}`} pageNumber={citation} />
-                  ))}
-                </div>
+                <>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {message.citations.map((citation) => (
+                      <CitationBadge
+                        key={`${message.id}-${citation}`}
+                        pageNumber={citation}
+                        onClick={() => onSelectPage(citation)}
+                      />
+                    ))}
+                  </div>
+                  <PageSourceList
+                    pages={pages}
+                    citations={message.citations}
+                    onSelectPage={onSelectPage}
+                  />
+                </>
               ) : null}
             </div>
           </div>
         );
       })}
+
+      {pendingRequest ? (
+        <>
+          <div className="flex justify-end">
+            <div className="max-w-[92%] rounded-[1.25rem] bg-[#f2f3f6] px-4 py-3 text-sm leading-7 text-[#111727]">
+              <div className="whitespace-pre-wrap">{pendingRequest.prompt}</div>
+            </div>
+          </div>
+
+          <div className="flex justify-start">
+            <div
+              role="status"
+              aria-live="polite"
+              className="max-w-[92%] rounded-[1.25rem] border border-[#dde2eb] bg-white px-4 py-3 text-sm leading-7 text-[#243042]"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex gap-1.5">
+                  <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#9aa4b2]" />
+                  <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#9aa4b2] [animation-delay:120ms]" />
+                  <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#9aa4b2] [animation-delay:240ms]" />
+                </div>
+                <span className="font-medium text-[#111727]">
+                  {pendingRequest.tool === "deep-research"
+                    ? "Thinking through your research question..."
+                    : "Thinking through the paper..."}
+                </span>
+              </div>
+              <div className="mt-3 space-y-1 text-[#5a6576]">
+                {pendingRequest.tool === "deep-research" ? (
+                  <>
+                    <p>Searching for related sources</p>
+                    <p>Ranking the most useful papers</p>
+                    <p>Drafting a cited research summary</p>
+                  </>
+                ) : (
+                  <>
+                    <p>Finding the most relevant pages</p>
+                    <p>Checking the source evidence</p>
+                    <p>Preparing a simple cited answer</p>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
+function DeepResearchThinkingPanel({ prompt }: { prompt: string }) {
+  return (
+    <div role="status" aria-live="polite" className="space-y-6">
+      <div className="rounded-[1.4rem] border border-[#e1e6ef] bg-[#fbfcfe] p-5">
+        <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7e8795]">
+          Deep Research
+        </div>
+        <h2 className="mt-2 text-[22px] font-semibold tracking-[-0.04em] text-[#111727]">
+          Thinking through your request
+        </h2>
+        <p className="mt-3 text-[15px] leading-8 text-[#283342]">{prompt}</p>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        {[
+          "Searching related papers",
+          "Ranking the strongest sources",
+          "Writing a cited synthesis",
+        ].map((step) => (
+          <div
+            key={step}
+            className="rounded-[1.2rem] border border-[#e3e7ee] bg-white p-4 shadow-[0_10px_24px_rgba(16,21,34,0.04)]"
+          >
+            <div className="flex items-center gap-3">
+              <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#5a8bff]" />
+              <div className="text-sm font-medium text-[#111727]">{step}</div>
+            </div>
+            <div className="mt-3 h-2 rounded-full bg-[#eef2f7]" />
+            <div className="mt-2 h-2 w-4/5 rounded-full bg-[#f3f6fa]" />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -542,10 +793,14 @@ function ReportSection({
   title,
   body,
   citations,
+  pages,
+  onSelectPage,
 }: {
   title: string;
   body: string;
   citations: number[];
+  pages: DocumentPageRecord[];
+  onSelectPage: (pageNumber: number) => void;
 }) {
   return (
     <section className="border-b border-[#e8ebf0] pb-7">
@@ -557,10 +812,18 @@ function ReportSection({
         {citations.length > 0 ? " " : null}
         {citations.map((citation) => (
           <span key={`${title}-${citation}`} className="ml-2 inline-block align-middle">
-            <CitationBadge pageNumber={citation} />
+            <CitationBadge
+              pageNumber={citation}
+              onClick={() => onSelectPage(citation)}
+            />
           </span>
         ))}
       </p>
+      <PageSourceList
+        pages={pages}
+        citations={citations}
+        onSelectPage={onSelectPage}
+      />
     </section>
   );
 }
@@ -667,6 +930,7 @@ export function DocumentWorkspaceView({
   const [deepResearchResult, setDeepResearchResult] = useState<DeepResearchResult | null>(
     null,
   );
+  const [pendingRequest, setPendingRequest] = useState<PendingRequest | null>(null);
   const [supportingQuotes, setSupportingQuotes] = useState<string[]>([]);
   const [focusedPageNumber, setFocusedPageNumber] = useState<number | null>(
     workspace.pages[0]?.pageNumber ?? null,
@@ -684,9 +948,12 @@ export function DocumentWorkspaceView({
   );
   const composerRef = useRef<HTMLTextAreaElement | null>(null);
   const autoRunStartedRef = useRef(false);
+  const sidebarScrollRef = useRef<HTMLDivElement | null>(null);
 
   const hasDeepResearchResult = deepResearchResult !== null;
-  const outputFiles = hasDeepResearchResult
+  const isDeepResearchSession =
+    hasDeepResearchResult || pendingRequest?.tool === "deep-research";
+  const outputFiles = isDeepResearchSession
     ? [
         {
           id: "insights" as const,
@@ -758,6 +1025,7 @@ export function DocumentWorkspaceView({
     setPrompt("");
 
     if (selectedTool === "notes") {
+      setPendingRequest(null);
       setHelperMessage("Saving your note into the document notebook...");
 
       startSaving(async () => {
@@ -778,7 +1046,9 @@ export function DocumentWorkspaceView({
     }
 
     if (selectedTool === "deep-research") {
-      setSidebarPanel("sources");
+      setSidebarPanel("chat");
+      setPendingRequest({ tool: "deep-research", prompt: userPrompt });
+      setSelectedFile("insights");
       setSupportingQuotes([]);
       setHelperMessage(
         "Running Deep Research with OpenRouter and ranking external literature...",
@@ -798,9 +1068,12 @@ export function DocumentWorkspaceView({
             `Deep Research complete: ${result.papers.length} ranked papers using ${result.model}.`,
           );
         } catch {
+          setPrompt(userPrompt);
           setHelperMessage(
             "Deep Research could not finish right now. Check your OpenRouter key or try again.",
           );
+        } finally {
+          setPendingRequest(null);
         }
       });
 
@@ -808,6 +1081,7 @@ export function DocumentWorkspaceView({
     }
 
     setSidebarPanel("chat");
+    setPendingRequest({ tool: "chat-with-pdf", prompt: userPrompt });
     setHelperMessage("Searching the document and grounding the answer in retrieved pages...");
 
     startSending(async () => {
@@ -826,7 +1100,10 @@ export function DocumentWorkspaceView({
         setFocusedPageNumber(response.assistantMessage.citations[0] ?? focusedPageNumber);
         setHelperMessage(formatPagesLabel(response.assistantMessage.citations));
       } catch {
+        setPrompt(userPrompt);
         setHelperMessage("The PDF answer could not be generated right now. Try again.");
+      } finally {
+        setPendingRequest(null);
       }
     });
   }
@@ -897,6 +1174,27 @@ export function DocumentWorkspaceView({
     }, 0);
   }, [autoRunInitialPrompt, initialMode, initialPrompt]);
 
+  useEffect(() => {
+    if (sidebarPanel !== "chat") {
+      return;
+    }
+
+    const scrollContainer = sidebarScrollRef.current;
+
+    if (!scrollContainer) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      scrollContainer.scrollTo({
+        top: scrollContainer.scrollHeight,
+        behavior: pendingRequest ? "smooth" : "auto",
+      });
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [messages.length, pendingRequest, sidebarPanel]);
+
   const activeFile = outputFiles.find((file) => file.id === selectedFile) ?? outputFiles[0];
   const activeTool = composerTools.find((item) => item.id === selectedTool) ?? composerTools[0];
   const suggestionItems = hasDeepResearchResult
@@ -912,12 +1210,24 @@ export function DocumentWorkspaceView({
   ];
   const activeFileDescription =
     selectedFile === "insights"
-      ? hasDeepResearchResult
+      ? isDeepResearchSession
         ? "Readable deep-research report"
         : "Simple summary and key takeaways"
-      : hasDeepResearchResult
+      : isDeepResearchSession
         ? "Ranked papers and citation notes"
         : "Grounded evidence from the PDF";
+
+  function handleSelectPageSource(pageNumber: number) {
+    setSidebarPanel("sources");
+    setSelectedFile("evidence");
+    setFocusedPageNumber(pageNumber);
+  }
+
+  function handleSelectDeepResearchPaper(paperId: string) {
+    setSidebarPanel("sources");
+    setSelectedFile("evidence");
+    setFocusedPaperId(paperId);
+  }
 
   return (
     <div className="min-h-screen bg-[#f7f7f8] text-[#101522]">
@@ -983,7 +1293,9 @@ export function DocumentWorkspaceView({
 
             <div className="mt-4 flex flex-wrap gap-2 text-xs text-[#627086]">
               <span className="rounded-full bg-[#f6f8fb] px-3 py-1.5">
-                {hasDeepResearchResult && deepResearchResult
+                {pendingRequest?.tool === "deep-research"
+                  ? "Research in progress"
+                  : hasDeepResearchResult && deepResearchResult
                   ? `${deepResearchResult.papers.length} ranked papers`
                   : `${workspace.document.pageCount} pages extracted`}
               </span>
@@ -996,8 +1308,13 @@ export function DocumentWorkspaceView({
             </div>
           </div>
 
-          <div className="max-h-[calc(100vh-360px)] space-y-5 overflow-y-auto px-5 py-5">
-            {selectedTool === "deep-research" && !hasDeepResearchResult ? (
+          <div
+            ref={sidebarScrollRef}
+            className="max-h-[calc(100vh-360px)] space-y-5 overflow-y-auto px-5 py-5"
+          >
+            {selectedTool === "deep-research" &&
+            !hasDeepResearchResult &&
+            pendingRequest?.tool !== "deep-research" ? (
               <div className="rounded-[1.2rem] border border-[#d9dee7] bg-[#fbfcfe] p-4">
                 <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7e8795]">
                   Deep Research is ready
@@ -1114,7 +1431,12 @@ export function DocumentWorkspaceView({
               </div>
             ) : (
               <div className="space-y-5">
-                <ConversationList messages={messages} />
+                <ConversationList
+                  messages={messages}
+                  pages={workspace.pages}
+                  onSelectPage={handleSelectPageSource}
+                  pendingRequest={pendingRequest}
+                />
 
                 {supportingQuotes.length > 0 ? (
                   <div className="rounded-[1.2rem] border border-[#d9dee7] bg-[#fbfcfe] p-4">
@@ -1223,10 +1545,18 @@ export function DocumentWorkspaceView({
           </div>
 
           <div className="max-h-[calc(100vh-74px)] overflow-y-auto px-5 py-6 sm:px-7 xl:px-8">
-            {hasDeepResearchResult && deepResearchResult ? (
+            {pendingRequest?.tool === "deep-research" ? (
+              <DeepResearchThinkingPanel prompt={pendingRequest.prompt} />
+            ) : hasDeepResearchResult && deepResearchResult ? (
               selectedFile === "insights" ? (
                 <div className="space-y-7">
-                  <ReportSection title="TL;DR" body={deepResearchResult.tldr} citations={[]} />
+                  <ReportSection
+                    title="TL;DR"
+                    body={deepResearchResult.tldr}
+                    citations={[]}
+                    pages={workspace.pages}
+                    onSelectPage={handleSelectPageSource}
+                  />
 
                   <section className="border-b border-[#e8ebf0] pb-7">
                     <h2 className="text-[19px] font-semibold tracking-[-0.03em] text-[#111727]">
@@ -1263,11 +1593,17 @@ export function DocumentWorkspaceView({
                               <ReferenceBadge
                                 key={`${section.title}-${paperId}`}
                                 label={String(paperIndex + 1)}
+                                onClick={() => handleSelectDeepResearchPaper(paperId)}
                               />
                             );
                           })}
                         </div>
                       ) : null}
+                      <PaperSourceList
+                        result={deepResearchResult}
+                        paperIds={section.supportingPaperIds}
+                        onSelectPaper={handleSelectDeepResearchPaper}
+                      />
                     </section>
                   ))}
 
@@ -1305,6 +1641,8 @@ export function DocumentWorkspaceView({
                   title="TL;DR"
                   body={workspace.document.summary.simpleSummary}
                   citations={workspace.pages.slice(0, 2).map((page) => page.pageNumber)}
+                  pages={workspace.pages}
+                  onSelectPage={handleSelectPageSource}
                 />
 
                 <section className="border-b border-[#e8ebf0] pb-7">
@@ -1323,23 +1661,44 @@ export function DocumentWorkspaceView({
                               workspace.pages[0]?.pageNumber ??
                               1
                             }
+                            onClick={() =>
+                              handleSelectPageSource(
+                                workspace.pages[index % pageCount]?.pageNumber ??
+                                  workspace.pages[0]?.pageNumber ??
+                                  1,
+                              )
+                            }
                           />
                         </div>
                       </div>
                     ))}
                   </div>
+                  <PageSourceList
+                    pages={workspace.pages}
+                    citations={findings.map(
+                      (_, index) =>
+                        workspace.pages[index % pageCount]?.pageNumber ??
+                        workspace.pages[0]?.pageNumber ??
+                        1,
+                    )}
+                    onSelectPage={handleSelectPageSource}
+                  />
                 </section>
 
                 <ReportSection
                   title="Methodology in simple terms"
                   body={workspace.document.summary.methodology}
                   citations={[workspace.pages[1]?.pageNumber ?? workspace.pages[0]?.pageNumber ?? 1]}
+                  pages={workspace.pages}
+                  onSelectPage={handleSelectPageSource}
                 />
 
                 <ReportSection
                   title="Limitations and caution"
                   body={workspace.document.summary.limitations}
                   citations={[workspace.pages[pageCount - 1]?.pageNumber ?? 1]}
+                  pages={workspace.pages}
+                  onSelectPage={handleSelectPageSource}
                 />
 
                 <section className="border-b border-[#e8ebf0] pb-7">
@@ -1362,6 +1721,13 @@ export function DocumentWorkspaceView({
                               workspace.pages[0]?.pageNumber ??
                               1
                             }
+                            onClick={() =>
+                              handleSelectPageSource(
+                                workspace.pages[index % pageCount]?.pageNumber ??
+                                  workspace.pages[0]?.pageNumber ??
+                                  1,
+                              )
+                            }
                           />
                         </div>
                         <p className="mt-2 text-sm leading-7 text-[#4a5565]">
@@ -1370,6 +1736,16 @@ export function DocumentWorkspaceView({
                       </div>
                     ))}
                   </div>
+                  <PageSourceList
+                    pages={workspace.pages}
+                    citations={definitions.map(
+                      (_, index) =>
+                        workspace.pages[index % pageCount]?.pageNumber ??
+                        workspace.pages[0]?.pageNumber ??
+                        1,
+                    )}
+                    onSelectPage={handleSelectPageSource}
+                  />
                 </section>
 
                 <section className="space-y-4">
@@ -1435,6 +1811,8 @@ export function DocumentWorkspaceView({
                   title="Evidence file overview"
                   body="This file collects the most useful page excerpts from the PDF so you can inspect the grounded evidence behind the generated report."
                   citations={workspace.pages.map((page) => page.pageNumber)}
+                  pages={workspace.pages}
+                  onSelectPage={handleSelectPageSource}
                 />
 
                 <div className="space-y-4">
@@ -1451,7 +1829,10 @@ export function DocumentWorkspaceView({
                         <h3 className="text-sm font-semibold text-[#111727]">
                           Page {page.pageNumber}
                         </h3>
-                        <CitationBadge pageNumber={page.pageNumber} />
+                        <CitationBadge
+                          pageNumber={page.pageNumber}
+                          onClick={() => handleSelectPageSource(page.pageNumber)}
+                        />
                       </div>
                       <p className="mt-3 text-sm leading-7 text-[#435062]">
                         {page.textContent}
