@@ -13,7 +13,7 @@ const navigationItems = [
   {
     href: "/documents",
     label: "Papers",
-    description: "Upload PDFs, ask questions, and read summaries",
+    description: "Open papers, ask questions, and read summaries",
   },
   {
     href: "/search",
@@ -84,7 +84,7 @@ export function WorkspaceShell({
                 What this assistant does
               </div>
               <ul className="mt-3 space-y-2 text-sm leading-6 text-[#667287]">
-                <li>Upload papers and chat with them page by page.</li>
+                <li>Open papers and ask grounded questions page by page.</li>
                 <li>Explain dense academic language in simpler terms.</li>
                 <li>Generate summaries and save notes as you read.</li>
                 <li>Answer only from retrieved PDF chunks.</li>
@@ -132,14 +132,11 @@ export function WorkspaceShell({
                   Research workspace
                 </p>
                 <h1 className="mt-1 text-2xl font-semibold tracking-[-0.05em] text-[#111727]">
-                  Upload papers, ask questions, and cite sources faster
+                  Ask questions, understand papers, and cite sources faster
                 </h1>
               </div>
 
               <div className="flex flex-wrap gap-3 text-sm text-[#5d697d]">
-                <div className="rounded-full border border-[#dce4f2] bg-white px-4 py-2">
-                  Upload papers
-                </div>
                 <div className="rounded-full border border-[#dce4f2] bg-white px-4 py-2">
                   Ask questions
                 </div>
@@ -150,7 +147,10 @@ export function WorkspaceShell({
                   Summaries
                 </div>
                 <div className="rounded-full border border-[#dce4f2] bg-white px-4 py-2">
-                  Notes + citations
+                  Notes
+                </div>
+                <div className="rounded-full border border-[#dce4f2] bg-white px-4 py-2">
+                  Citations
                 </div>
               </div>
             </div>
