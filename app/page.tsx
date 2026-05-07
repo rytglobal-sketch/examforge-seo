@@ -342,7 +342,7 @@ export default function HomePage() {
           </div>
 
           <div className="mx-auto max-w-[1280px] px-4 pb-14 pt-2 sm:px-6 lg:px-8 lg:pt-0 xl:px-10">
-            <div className="mx-auto max-w-[1080px] pt-8 lg:pt-10">
+            <div className="mx-auto max-w-[980px] pt-8 lg:pt-10">
               <header className="mx-auto max-w-[760px] text-center">
                 <h1 className="text-[2.15rem] font-semibold tracking-[-0.06em] text-[#0f0d0b] sm:text-[3rem]">
                   AI research help for students

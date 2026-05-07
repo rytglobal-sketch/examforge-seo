@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export type ResearchComposerToolId =
+  | "deep-research"
   | "citation-helper"
   | "chat-with-pdf"
   | "notes";
@@ -32,12 +33,29 @@ type QuickAction = {
   href: string;
 };
 
+type ComposerThinkingState = {
+  toolLabel: string;
+  prompt: string;
+  steps: string[];
+};
+
+const demoWorkspaceHref = "/documents/demo-thesis-review";
+
 const toolOptions: ComposerTool[] = [
+  {
+    id: "deep-research",
+    label: "Deep Research",
+    description: "Search, compare, and synthesize related literature from one prompt.",
+    href: demoWorkspaceHref,
+    mode: "deep-research",
+    queryKey: "prompt",
+  },
   {
     id: "chat-with-pdf",
     label: "Ask Questions",
     description: "Open the workspace and carry your question into grounded chat.",
-    href: "/documents",
+    href: demoWorkspaceHref,
+    mode: "chat-with-pdf",
     queryKey: "prompt",
   },
   {
@@ -61,7 +79,7 @@ const quickActions: QuickAction[] = [
     id: "upload-pdf",
     label: "Open Workspace",
     description: "Go to the main research workspace and sample paper.",
-    href: "/documents",
+    href: demoWorkspaceHref,
   },
   {
     id: "find-citations",
@@ -97,6 +115,68 @@ function buildToolHref(tool: ComposerTool, prompt: string) {
 
   const query = params.toString();
   return query ? `${tool.href}?${query}` : tool.href;
+}
+
+function getThinkingSteps(tool: ComposerTool) {
+  switch (tool.id) {
+    case "deep-research":
+      return [
+        "Understanding your research question",
+        "Searching and ranking relevant sources",
+        "Preparing a cited research brief",
+      ];
+    case "citation-helper":
+      return [
+        "Understanding your claim",
+        "Looking for relevant supporting papers",
+        "Preparing citation suggestions",
+      ];
+    case "notes":
+      return [
+        "Opening your notes workspace",
+        "Preparing the writing context",
+        "Getting your note ready to save",
+      ];
+    case "chat-with-pdf":
+    default:
+      return [
+        "Understanding your question",
+        "Opening the research workspace",
+        "Preparing a grounded answer flow",
+      ];
+  }
+}
+
+function ThinkingPanel({ state }: { state: ComposerThinkingState }) {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="mx-2 mb-3 rounded-[1.2rem] border border-[#e5ddd1] bg-[#faf7f2] px-4 py-4"
+    >
+      <div className="flex items-center gap-3">
+        <div className="flex gap-1.5">
+          <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#8d7f72]" />
+          <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#8d7f72] [animation-delay:140ms]" />
+          <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#8d7f72] [animation-delay:280ms]" />
+        </div>
+        <span className="text-[0.95rem] font-semibold text-[#1b1815]">
+          Thinking with {state.toolLabel}
+        </span>
+      </div>
+
+      <p className="mt-3 text-[0.95rem] leading-7 text-[#4f463f]">{state.prompt}</p>
+
+      <div className="mt-4 space-y-2 text-[0.84rem] text-[#6f6459]">
+        {state.steps.map((step) => (
+          <div key={step} className="flex items-center gap-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#c0b2a3]" />
+            <span>{step}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 function MenuCard({
@@ -169,6 +249,8 @@ export function ResearchComposer({
       ? `Template loaded for ${getToolById(initialToolId)?.label}. Replace the blanks with your topic and send it.`
       : "",
   );
+  const [thinkingState, setThinkingState] = useState<ComposerThinkingState | null>(null);
+  const handoffTimeoutRef = useRef<number | null>(null);
 
   const selectedTool = getToolById(selectedToolId);
   const showSelectedToolBadge = selectedTool.id !== defaultToolId;
@@ -209,9 +291,38 @@ export function ResearchComposer({
     }, 0);
   }, [initialPrompt, initialToolId]);
 
+  useEffect(() => {
+    return () => {
+      if (handoffTimeoutRef.current) {
+        window.clearTimeout(handoffTimeoutRef.current);
+      }
+    };
+  }, []);
+
   function handleSubmit() {
-    router.push(buildToolHref(selectedTool, prompt));
+    const trimmedPrompt = prompt.trim();
+
+    if (thinkingState) {
+      return;
+    }
+
+    if (!trimmedPrompt) {
+      setHelperMessage("Type what you want help with first.");
+      textareaRef.current?.focus();
+      return;
+    }
+
     setActiveMenu(null);
+    setHelperMessage(`Opening ${selectedTool.label}...`);
+    setThinkingState({
+      toolLabel: selectedTool.label,
+      prompt: trimmedPrompt,
+      steps: getThinkingSteps(selectedTool),
+    });
+
+    handoffTimeoutRef.current = window.setTimeout(() => {
+      router.push(buildToolHref(selectedTool, trimmedPrompt));
+    }, 450);
   }
 
   function handleQuickActionSelect(actionId: string) {
@@ -240,6 +351,7 @@ export function ResearchComposer({
       <textarea
         ref={textareaRef}
         aria-label="Research prompt"
+        disabled={Boolean(thinkingState)}
         value={prompt}
         onChange={(event) => setPrompt(event.target.value)}
         onKeyDown={(event) => {
@@ -256,6 +368,8 @@ export function ResearchComposer({
         <p className="px-2 pb-3 text-[0.84rem] text-[#7c7065]">{helperMessage}</p>
       ) : null}
 
+      {thinkingState ? <ThinkingPanel state={thinkingState} /> : null}
+
       <div className="flex items-center justify-between gap-3 border-t border-[#ebe5dc] pt-3">
         <div className="flex items-center gap-3">
           <div className="relative">
@@ -264,12 +378,13 @@ export function ResearchComposer({
               aria-label="Add tool"
               aria-expanded={activeMenu === "actions"}
               aria-haspopup="menu"
+              disabled={Boolean(thinkingState)}
               onClick={() =>
                 setActiveMenu((currentMenu) =>
                   currentMenu === "actions" ? null : "actions",
                 )
               }
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#d7d0c6] bg-white text-[1.45rem] leading-none text-[#56504b] transition-colors hover:bg-[#faf7f2]"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#d7d0c6] bg-white text-[1.45rem] leading-none text-[#56504b] transition-colors hover:bg-[#faf7f2] disabled:cursor-not-allowed disabled:opacity-60"
             >
               +
             </button>
@@ -288,12 +403,13 @@ export function ResearchComposer({
               type="button"
               aria-expanded={activeMenu === "tools"}
               aria-haspopup="menu"
+              disabled={Boolean(thinkingState)}
               onClick={() =>
                 setActiveMenu((currentMenu) =>
                   currentMenu === "tools" ? null : "tools",
                 )
               }
-              className="inline-flex items-center gap-1 text-[0.98rem] font-semibold text-[#171717]"
+              className="inline-flex items-center gap-1 text-[0.98rem] font-semibold text-[#171717] disabled:cursor-not-allowed disabled:opacity-60"
             >
               Tools
               <svg
@@ -332,10 +448,11 @@ export function ResearchComposer({
           <button
             type="button"
             aria-label="Use microphone"
+            disabled={Boolean(thinkingState)}
             onClick={() =>
               setHelperMessage("Voice input is coming soon. Type your research task for now.")
             }
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[#544d47] transition-colors hover:bg-[#f5f1eb]"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[#544d47] transition-colors hover:bg-[#f5f1eb] disabled:cursor-not-allowed disabled:opacity-60"
           >
             <svg
               viewBox="0 0 24 24"
@@ -357,20 +474,25 @@ export function ResearchComposer({
             type="button"
             aria-label="Send prompt"
             onClick={handleSubmit}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[#bdb5ae] text-white transition-colors hover:bg-[#aaa198]"
+            disabled={Boolean(thinkingState)}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[#bdb5ae] text-white transition-colors hover:bg-[#aaa198] disabled:cursor-not-allowed disabled:opacity-80"
           >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              className="h-3.5 w-3.5"
-            >
-              <path d="M12 17V7" />
-              <path d="m7 12 5-5 5 5" />
-            </svg>
+            {thinkingState ? (
+              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+            ) : (
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                className="h-3.5 w-3.5"
+              >
+                <path d="M12 17V7" />
+                <path d="m7 12 5-5 5 5" />
+              </svg>
+            )}
           </button>
         </div>
       </div>

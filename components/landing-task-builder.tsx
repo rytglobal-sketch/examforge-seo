@@ -105,8 +105,8 @@ function TaskColumnCard({
   onSelectTemplate: (item: LandingTaskItem) => void;
 }) {
   return (
-    <section className="flex h-full flex-col rounded-[1.45rem] bg-[#f6f4ef] p-4 shadow-[0_12px_32px_rgba(120,104,80,0.06)] sm:p-5">
-      <h2 className="text-[0.96rem] font-semibold tracking-[0.02em] text-[#181818]">
+    <section className="mx-auto flex h-full w-full max-w-[360px] flex-col rounded-[1.45rem] bg-[#f6f4ef] p-4 shadow-[0_12px_32px_rgba(120,104,80,0.06)] sm:p-5">
+      <h2 className="text-center text-[0.96rem] font-semibold tracking-[0.02em] text-[#181818]">
         {column.title}
       </h2>
 
@@ -151,7 +151,7 @@ export function LandingTaskBuilder({ columns }: LandingTaskBuilderProps) {
         Build your task
       </p>
 
-      <div className="mx-auto mt-6 grid max-w-[1080px] items-stretch gap-5 md:grid-cols-2 xl:grid-cols-3">
+      <div className="mx-auto mt-6 grid max-w-[860px] items-stretch justify-center gap-5 md:grid-cols-2">
         {columns.map((column) => (
           <TaskColumnCard
             key={column.title}
