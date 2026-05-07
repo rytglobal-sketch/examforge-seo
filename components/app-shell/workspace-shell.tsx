@@ -13,19 +13,66 @@ const navigationItems = [
   {
     href: "/documents",
     label: "Workspace",
-    description: "Start from questions, papers, and summaries",
+    description: "Ask, explain, and summarize",
   },
   {
     href: "/search",
     label: "Citations",
-    description: "Find papers and citation support for your claims",
+    description: "Find relevant papers fast",
   },
   {
     href: "/notes",
     label: "Notes",
-    description: "Save ideas, takeaways, and writing reminders",
+    description: "Save takeaways and reminders",
   },
 ] as const;
+
+const pageCopy = {
+  "/documents": {
+    eyebrow: "Research workspace",
+    title: "Ask better questions and get grounded answers",
+    chips: ["Ask", "Explain", "Summarize"],
+    helperTitle: "Best way to use this",
+    helperItems: [
+      "Start with one clear question.",
+      "Open the source when you need proof.",
+      "Turn useful answers into notes.",
+    ],
+  },
+  "/search": {
+    eyebrow: "Citations",
+    title: "Find papers you can actually cite",
+    chips: ["Claims", "Sources", "Support"],
+    helperTitle: "Best way to use this",
+    helperItems: [
+      "Paste one claim at a time.",
+      "Look for the papers with the clearest fit.",
+      "Bring the best sources back into your notes.",
+    ],
+  },
+  "/notes": {
+    eyebrow: "Notes",
+    title: "Keep only the takeaways worth reusing",
+    chips: ["Takeaways", "Definitions", "Writing reminders"],
+    helperTitle: "Good notes are short",
+    helperItems: [
+      "Capture the main point in one sentence.",
+      "Save one quote or citation cue if needed.",
+      "Add the next question you want to explore.",
+    ],
+  },
+  "/billing": {
+    eyebrow: "Billing",
+    title: "Manage your plan without the noise",
+    chips: ["Plans", "Usage", "Upgrade"],
+    helperTitle: "Before you upgrade",
+    helperItems: [
+      "Use the free flow first.",
+      "Upgrade only when you need more capacity.",
+      "Keep the setup simple.",
+    ],
+  },
+} as const;
 
 function SidebarLink({
   href,
@@ -41,14 +88,14 @@ function SidebarLink({
   return (
     <Link
       href={href}
-      className={`rounded-2xl border px-4 py-3 transition-all ${
+      className={`rounded-[1.1rem] border px-4 py-3 transition-all ${
         isActive
-          ? "border-[#b4cdfd] bg-white shadow-[0_18px_40px_rgba(31,111,255,0.08)]"
-          : "border-transparent bg-transparent hover:border-[#dce4f2] hover:bg-white/70"
+          ? "border-[#b4cdfd] bg-white shadow-[0_16px_34px_rgba(31,111,255,0.08)]"
+          : "border-transparent bg-transparent hover:border-[#dce4f2] hover:bg-white/80"
       }`}
     >
       <div className="text-sm font-semibold text-[#111727]">{label}</div>
-      <div className="mt-1 text-sm leading-6 text-[#6d7686]">{description}</div>
+      <div className="mt-1 text-[0.92rem] leading-6 text-[#6d7686]">{description}</div>
     </Link>
   );
 }
@@ -59,15 +106,16 @@ export function WorkspaceShell({
   children,
 }: WorkspaceShellProps) {
   const isGuestMode = user.isDemo;
+  const activePage = pageCopy[activePath];
 
   return (
     <div className="min-h-screen bg-[#f6f8fc] text-[#101522]">
-      <div className="mx-auto grid min-h-screen max-w-[1680px] lg:grid-cols-[300px_minmax(0,1fr)]">
+      <div className="mx-auto grid min-h-screen max-w-[1560px] lg:grid-cols-[272px_minmax(0,1fr)]">
         <aside className="border-b border-[#e1e7f0] bg-white/75 backdrop-blur lg:border-b-0 lg:border-r">
           <div className="flex h-full flex-col px-5 py-6 sm:px-6">
             <ResearchForgeLogo />
 
-            <div className="mt-8 grid gap-3">
+            <div className="mt-8 grid gap-2.5">
               {navigationItems.map((item) => (
                 <SidebarLink
                   key={item.href}
@@ -79,26 +127,23 @@ export function WorkspaceShell({
               ))}
             </div>
 
-            <div className="mt-8 rounded-[1.6rem] border border-[#dce4f2] bg-[#f8fbff] p-4">
+            <div className="mt-6 rounded-[1.4rem] border border-[#dce4f2] bg-[#f8fbff] p-4">
               <div className="text-sm font-semibold text-[#23324b]">
-                What this assistant does
+                {activePage.helperTitle}
               </div>
               <ul className="mt-3 space-y-2 text-sm leading-6 text-[#667287]">
-                <li>Start from a question, topic, claim, or paper.</li>
-                <li>Use sources when they help, not as the only starting point.</li>
-                <li>Explain dense academic language in simpler terms.</li>
-                <li>Generate summaries and save notes as you read.</li>
-                <li>Answer only from retrieved PDF chunks.</li>
-                <li>Show page citations or say when the answer is not in the paper.</li>
+                {activePage.helperItems.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
               </ul>
             </div>
 
-            <div className="mt-auto rounded-[1.75rem] border border-[#dce4f2] bg-white p-4 shadow-[0_20px_40px_rgba(16,21,34,0.05)]">
+            <div className="mt-auto rounded-[1.5rem] border border-[#dce4f2] bg-white p-4 shadow-[0_18px_34px_rgba(16,21,34,0.05)]">
               <div className="text-sm text-[#6d7686]">
                 {isGuestMode ? "Guest mode" : "Signed in as"}
               </div>
               <div className="mt-1 font-semibold text-[#111727]">{user.name}</div>
-              <div className="text-sm text-[#6d7686]">{user.email}</div>
+              <div className="truncate text-sm text-[#6d7686]">{user.email}</div>
               <div className="mt-3 inline-flex rounded-full bg-[#eef5ff] px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#1f6fff]">
                 {user.plan}
                 {user.isDemo ? " demo" : ""}
@@ -130,29 +175,22 @@ export function WorkspaceShell({
             <div className="flex flex-col gap-4 px-5 py-5 sm:px-8 lg:flex-row lg:items-center lg:justify-between lg:px-10">
               <div>
                 <p className="text-sm font-medium uppercase tracking-[0.18em] text-[#7d8798]">
-                  Research workspace
+                  {activePage.eyebrow}
                 </p>
                 <h1 className="mt-1 text-2xl font-semibold tracking-[-0.05em] text-[#111727]">
-                  Ask questions, understand research, and cite sources faster
+                  {activePage.title}
                 </h1>
               </div>
 
               <div className="flex flex-wrap gap-3 text-sm text-[#5d697d]">
-                <div className="rounded-full border border-[#dce4f2] bg-white px-4 py-2">
-                  Ask questions
-                </div>
-                <div className="rounded-full border border-[#dce4f2] bg-white px-4 py-2">
-                  Simple explanations
-                </div>
-                <div className="rounded-full border border-[#dce4f2] bg-white px-4 py-2">
-                  Summaries
-                </div>
-                <div className="rounded-full border border-[#dce4f2] bg-white px-4 py-2">
-                  Notes
-                </div>
-                <div className="rounded-full border border-[#dce4f2] bg-white px-4 py-2">
-                  Citations
-                </div>
+                {activePage.chips.map((chip) => (
+                  <div
+                    key={chip}
+                    className="rounded-full border border-[#dce4f2] bg-white px-4 py-2"
+                  >
+                    {chip}
+                  </div>
+                ))}
               </div>
             </div>
           </header>

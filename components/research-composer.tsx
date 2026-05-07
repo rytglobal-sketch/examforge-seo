@@ -33,10 +33,15 @@ type QuickAction = {
   href: string;
 };
 
+type ComposerThinkingStage = {
+  label: string;
+  description: string;
+};
+
 type ComposerThinkingState = {
   toolLabel: string;
   prompt: string;
-  steps: string[];
+  stages: ComposerThinkingStage[];
 };
 
 const demoWorkspaceHref = "/documents/demo-thesis-review";
@@ -121,33 +126,101 @@ function getThinkingSteps(tool: ComposerTool) {
   switch (tool.id) {
     case "deep-research":
       return [
-        "Understanding your research question",
-        "Searching and ranking relevant sources",
-        "Preparing a cited research brief",
+        {
+          label: "Clarifying the research scope",
+          description: "Turning your prompt into a sharper research brief.",
+        },
+        {
+          label: "Searching and screening literature",
+          description: "Preparing the paper search and ranking flow.",
+        },
+        {
+          label: "Extracting patterns and evidence",
+          description: "Lining up the mechanisms, contrasts, and strongest support.",
+        },
+        {
+          label: "Drafting the final research brief",
+          description: "Getting the cited summary and downloads ready.",
+        },
       ];
     case "citation-helper":
       return [
-        "Understanding your claim",
-        "Looking for relevant supporting papers",
-        "Preparing citation suggestions",
+        {
+          label: "Parsing your claim",
+          description: "Identifying the claim, context, and key search terms.",
+        },
+        {
+          label: "Searching for supporting papers",
+          description: "Finding likely sources and expanding the query.",
+        },
+        {
+          label: "Ranking citation matches",
+          description: "Choosing the most relevant papers before you cite them.",
+        },
       ];
     case "notes":
       return [
-        "Opening your notes workspace",
-        "Preparing the writing context",
-        "Getting your note ready to save",
+        {
+          label: "Opening your notes workspace",
+          description: "Loading the place where this note belongs.",
+        },
+        {
+          label: "Preparing the writing context",
+          description: "Getting the note ready with the right research context.",
+        },
+        {
+          label: "Saving the note flow",
+          description: "Setting up the note so you can keep writing immediately.",
+        },
       ];
     case "chat-with-pdf":
     default:
       return [
-        "Understanding your question",
-        "Opening the research workspace",
-        "Preparing a grounded answer flow",
+        {
+          label: "Understanding your question",
+          description: "Working out what you need from the paper or topic.",
+        },
+        {
+          label: "Opening the research workspace",
+          description: "Loading the best place to answer this clearly.",
+        },
+        {
+          label: "Preparing a grounded answer flow",
+          description: "Getting ready to answer with evidence and citations.",
+        },
       ];
   }
 }
 
+function useComposerThinkingStageIndex(enabled: boolean, stageCount: number) {
+  const [activeStageIndex, setActiveStageIndex] = useState(0);
+
+  useEffect(() => {
+    if (!enabled || stageCount <= 1) {
+      return;
+    }
+
+    const timers: number[] = [];
+
+    for (let index = 1; index < stageCount; index += 1) {
+      const timer = window.setTimeout(() => {
+        setActiveStageIndex(index);
+      }, index * 260);
+
+      timers.push(timer);
+    }
+
+    return () => {
+      timers.forEach((timer) => window.clearTimeout(timer));
+    };
+  }, [enabled, stageCount]);
+
+  return activeStageIndex;
+}
+
 function ThinkingPanel({ state }: { state: ComposerThinkingState }) {
+  const activeStageIndex = useComposerThinkingStageIndex(true, state.stages.length);
+
   return (
     <div
       role="status"
@@ -167,13 +240,47 @@ function ThinkingPanel({ state }: { state: ComposerThinkingState }) {
 
       <p className="mt-3 text-[0.95rem] leading-7 text-[#4f463f]">{state.prompt}</p>
 
-      <div className="mt-4 space-y-2 text-[0.84rem] text-[#6f6459]">
-        {state.steps.map((step) => (
-          <div key={step} className="flex items-center gap-2">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#c0b2a3]" />
-            <span>{step}</span>
-          </div>
-        ))}
+      <div className="mt-4 space-y-2.5">
+        {state.stages.map((stage, index) => {
+          const isComplete = index < activeStageIndex;
+          const isActive = index === activeStageIndex;
+
+          return (
+            <div
+              key={stage.label}
+              className={`rounded-[1rem] border px-3 py-3 ${
+                isActive
+                  ? "border-[#dcc8b6] bg-white"
+                  : isComplete
+                    ? "border-[#e8ddd2] bg-[#fffdf9]"
+                    : "border-[#eee7de] bg-[#fcfaf6]"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <span
+                  className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-[0.72rem] font-semibold ${
+                    isActive
+                      ? "bg-[#8d7f72] text-white"
+                      : isComplete
+                        ? "bg-[#e9dfd5] text-[#5b5148]"
+                      : "bg-[#f0ebe4] text-[#8c8176]"
+                  }`}
+                >
+                  {isComplete ? "OK" : index + 1}
+                </span>
+                <span className="text-[0.84rem] font-semibold text-[#1b1815]">
+                  {stage.label}
+                </span>
+                <span className="ml-auto text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[#8d7f72]">
+                  {isActive ? "Running" : isComplete ? "Done" : "Queued"}
+                </span>
+              </div>
+              <p className="mt-2 text-[0.78rem] leading-6 text-[#6f6459]">
+                {stage.description}
+              </p>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -317,12 +424,14 @@ export function ResearchComposer({
     setThinkingState({
       toolLabel: selectedTool.label,
       prompt: trimmedPrompt,
-      steps: getThinkingSteps(selectedTool),
+      stages: getThinkingSteps(selectedTool),
     });
+
+    const handoffDelayMs = selectedTool.id === "deep-research" ? 1050 : 700;
 
     handoffTimeoutRef.current = window.setTimeout(() => {
       router.push(buildToolHref(selectedTool, trimmedPrompt));
-    }, 450);
+    }, handoffDelayMs);
   }
 
   function handleQuickActionSelect(actionId: string) {

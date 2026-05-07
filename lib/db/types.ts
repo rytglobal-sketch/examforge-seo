@@ -163,6 +163,13 @@ export type DeepResearchSection = {
   supportingPaperIds: string[];
 };
 
+export type DeepResearchComparisonRow = {
+  context: string;
+  observations: string;
+  primarySourceIds: string[];
+  dominantMechanisms: string;
+};
+
 export type DeepResearchResult = {
   query: string;
   refinedQuery: string;
@@ -172,6 +179,10 @@ export type DeepResearchResult = {
   searchSummary: string;
   tldr: string;
   sections: DeepResearchSection[];
+  mechanismsSection: DeepResearchSection;
+  comparisonRows: DeepResearchComparisonRow[];
+  synthesisSection: DeepResearchSection;
+  practicalImplicationsSection: DeepResearchSection;
   papers: DeepResearchPaper[];
   relatedQuestions: string[];
 };

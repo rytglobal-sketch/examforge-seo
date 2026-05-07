@@ -9,6 +9,7 @@ import {
 } from "@/app/actions/documents";
 import type {
   ChatMessageRecord,
+  DeepResearchComparisonRow,
   DeepResearchResult,
   DocumentPageRecord,
   DocumentWorkspace,
@@ -22,7 +23,7 @@ type DocumentWorkspaceProps = {
   autoRunInitialPrompt?: boolean;
 };
 
-type WorkspaceFileId = "insights" | "evidence";
+type WorkspaceFileId = "insights" | "dashboard" | "evidence";
 type ComposerTool = "deep-research" | "chat-with-pdf" | "notes";
 type SidebarPanel = "sources" | "chat" | "files";
 type PendingRequest = {
@@ -61,6 +62,177 @@ const quickActions = [
   "List the strongest findings with citations",
   "Show the main limitations I should mention",
 ] as const;
+
+type DeepResearchThinkingStage = {
+  id: string;
+  label: string;
+  description: string;
+  output: string;
+};
+
+const deepResearchThinkingStages: DeepResearchThinkingStage[] = [
+  {
+    id: "scope",
+    label: "Clarifying the research scope",
+    description:
+      "Parsing the question, constraints, and evidence standard before searching.",
+    output: "Working research brief",
+  },
+  {
+    id: "search",
+    label: "Searching the literature",
+    description:
+      "Looking across related papers, source links, and citation paths to build a candidate set.",
+    output: "Candidate paper pool",
+  },
+  {
+    id: "screen",
+    label: "Screening and ranking evidence",
+    description:
+      "Comparing scope, methods, context, and citation usefulness to keep the strongest papers.",
+    output: "Ranked evidence table",
+  },
+  {
+    id: "extract",
+    label: "Extracting mechanisms and contrasts",
+    description:
+      "Pulling out the underlying drivers, patterns, and context-specific differences across sources.",
+    output: "Mechanisms and comparison notes",
+  },
+  {
+    id: "synthesis",
+    label: "Writing the research briefing",
+    description:
+      "Drafting the cited summary, references, and downloadable outputs for the final answer.",
+    output: "Structured report and downloads",
+  },
+];
+
+const deepResearchStageDurationsMs = [1100, 1300, 1450, 1600] as const;
+
+function useStagedThinkingProgress(enabled: boolean, stageCount: number) {
+  const [activeStageIndex, setActiveStageIndex] = useState(0);
+
+  useEffect(() => {
+    if (!enabled || stageCount <= 1) {
+      return;
+    }
+
+    const timers: number[] = [];
+    let elapsedMs = 0;
+
+    for (let index = 1; index < stageCount; index += 1) {
+      elapsedMs +=
+        deepResearchStageDurationsMs[index - 1] ??
+        deepResearchStageDurationsMs[deepResearchStageDurationsMs.length - 1] ??
+        1400;
+
+      const timer = window.setTimeout(() => {
+        setActiveStageIndex(index);
+      }, elapsedMs);
+
+      timers.push(timer);
+    }
+
+    return () => {
+      timers.forEach((timer) => window.clearTimeout(timer));
+    };
+  }, [enabled, stageCount]);
+
+  return activeStageIndex;
+}
+
+function stageStatusForIndex(index: number, activeStageIndex: number) {
+  if (index < activeStageIndex) {
+    return "complete" as const;
+  }
+
+  if (index === activeStageIndex) {
+    return "active" as const;
+  }
+
+  return "queued" as const;
+}
+
+function DeepResearchStageTimeline({
+  activeStageIndex,
+  compact = false,
+}: {
+  activeStageIndex: number;
+  compact?: boolean;
+}) {
+  return (
+    <div className={compact ? "space-y-2.5" : "space-y-3"}>
+      {deepResearchThinkingStages.map((stage, index) => {
+        const status = stageStatusForIndex(index, activeStageIndex);
+
+        return (
+          <div
+            key={stage.id}
+            className={`rounded-[1.1rem] border px-4 py-3 transition-colors ${
+              status === "active"
+                ? "border-[#cddafb] bg-[#f5f8ff]"
+                : status === "complete"
+                  ? "border-[#dbe5f3] bg-white"
+                  : "border-[#e8ecf2] bg-[#fbfcfe]"
+            } ${compact ? "" : "shadow-[0_8px_24px_rgba(16,21,34,0.04)]"}`}
+          >
+            <div className="flex items-start gap-3">
+              <div
+                className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
+                  status === "active"
+                    ? "bg-[#2963ff] text-white"
+                    : status === "complete"
+                      ? "bg-[#e9f7ef] text-[#1e8a4c]"
+                      : "bg-[#edf1f6] text-[#7a8596]"
+                }`}
+              >
+                {status === "complete" ? "OK" : index + 1}
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="text-sm font-semibold text-[#111727]">
+                    {stage.label}
+                  </div>
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-[0.7rem] font-semibold uppercase tracking-[0.12em] ${
+                      status === "active"
+                        ? "bg-[#e5eeff] text-[#2963ff]"
+                        : status === "complete"
+                          ? "bg-[#eaf7ef] text-[#1e8a4c]"
+                          : "bg-[#eef2f6] text-[#7b8696]"
+                    }`}
+                  >
+                    {status === "active"
+                      ? "Running"
+                      : status === "complete"
+                        ? "Done"
+                        : "Queued"}
+                  </span>
+                </div>
+
+                <p
+                  className={`mt-1.5 leading-6 ${
+                    compact ? "text-[0.82rem]" : "text-[0.9rem]"
+                  } text-[#556173]`}
+                >
+                  {stage.description}
+                </p>
+
+                {!compact ? (
+                  <div className="mt-2 text-[0.74rem] font-medium uppercase tracking-[0.12em] text-[#7f8896]">
+                    Output: {stage.output}
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 function slugify(value: string) {
   return value
@@ -102,6 +274,28 @@ function formatPagesLabel(citations: number[]) {
 
 function renderFileLabel(title: string, suffix: string) {
   return `${slugify(title) || "researchforge_output"}_${suffix}`;
+}
+
+function activeFileLabelForDownload(
+  title: string,
+  selectedFile: WorkspaceFileId,
+  hasDeepResearchResult: boolean,
+) {
+  if (hasDeepResearchResult) {
+    if (selectedFile === "insights") {
+      return renderFileLabel(title, "deep_research_report.md");
+    }
+
+    if (selectedFile === "dashboard") {
+      return renderFileLabel(title, "paper_discovery_dashboard.html");
+    }
+
+    return renderFileLabel(title, "ranked_papers.md");
+  }
+
+  return selectedFile === "insights"
+    ? renderFileLabel(title, "insights.md")
+    : renderFileLabel(title, "evidence.md");
 }
 
 function buildInsightsMarkdown(workspace: DocumentWorkspace) {
@@ -153,6 +347,12 @@ function buildEvidenceMarkdown(workspace: DocumentWorkspace) {
 }
 
 function buildDeepResearchReportMarkdown(result: DeepResearchResult) {
+  const referenceLines = result.papers.map((paper, index) => {
+    const authors = paper.authors.length ? paper.authors.join(", ") : "Unknown authors";
+    const doi = paper.doi ? ` DOI: ${paper.doi}.` : "";
+    return `${index + 1}. ${authors} (${paper.year}). ${paper.title}. ${paper.venue}.${doi} ${paper.url}`;
+  });
+
   return [
     `# Deep Research Report`,
     "",
@@ -166,7 +366,7 @@ function buildDeepResearchReportMarkdown(result: DeepResearchResult) {
     "## Search summary",
     result.searchSummary,
     "",
-    "## Synthesis",
+    "## Thematic analysis",
     ...result.sections.flatMap((section) => [
       `### ${section.title}`,
       section.body,
@@ -175,6 +375,33 @@ function buildDeepResearchReportMarkdown(result: DeepResearchResult) {
         : "Supporting papers: none tagged",
       "",
     ]),
+    "## Mechanisms and process drivers",
+    result.mechanismsSection.body,
+    "",
+    "## Comparative analysis",
+    "| Context / Setting | Typical Levels / Observations | Primary Sources | Dominant Mechanisms |",
+    "| --- | --- | --- | --- |",
+    ...result.comparisonRows.map((row) => {
+      const sourceLabels = row.primarySourceIds
+        .map((paperId) => {
+          const paperIndex = result.papers.findIndex((paper) => paper.id === paperId);
+          return paperIndex === -1 ? null : String(paperIndex + 1);
+        })
+        .filter(Boolean)
+        .join(", ");
+
+      return `| ${row.context} | ${row.observations} | ${sourceLabels || "Insufficient evidence"} | ${row.dominantMechanisms} |`;
+    }),
+    "",
+    `## ${result.synthesisSection.title}`,
+    result.synthesisSection.body,
+    "",
+    `## ${result.practicalImplicationsSection.title}`,
+    result.practicalImplicationsSection.body,
+    "",
+    "## References",
+    ...referenceLines,
+    "",
     "## Related questions",
     ...result.relatedQuestions.map((question) => `- ${question}`),
   ].join("\n");
@@ -196,6 +423,352 @@ function buildDeepResearchPapersMarkdown(result: DeepResearchResult) {
       ].join("\n"),
     ),
   ].join("\n\n");
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function renderRelevanceTone(score: number) {
+  if (score >= 80) {
+    return {
+      bg: "#e9f2ff",
+      fg: "#2158d4",
+    };
+  }
+
+  if (score >= 60) {
+    return {
+      bg: "#eef6ef",
+      fg: "#26734d",
+    };
+  }
+
+  return {
+    bg: "#fff2e8",
+    fg: "#b86427",
+  };
+}
+
+function buildDeepResearchDashboardHtml(result: DeepResearchResult) {
+  const rows = result.papers
+    .map((paper, index) => {
+      const tone = renderRelevanceTone(paper.relevanceScore);
+      const abstractPreview = paper.abstract
+        ? `${escapeHtml(trimText(paper.abstract, 260))}${paper.abstract.length > 260 ? ' <span class="more">More</span>' : ""}`
+        : "N/A";
+
+      return `
+        <tr>
+          <td class="checkbox-cell"><input type="checkbox" aria-label="Select paper ${index + 1}" /></td>
+          <td class="paper-cell">
+            <a class="paper-link" href="${escapeHtml(paper.url)}" target="_blank" rel="noopener noreferrer">${index + 1}. ${escapeHtml(paper.title)}</a>
+            <div class="paper-meta">${escapeHtml(paper.sourceLabel)}</div>
+            <div class="paper-meta">${escapeHtml(paper.authors.join(", ") || "Unknown authors")}</div>
+          </td>
+          <td class="cite-cell">${paper.citationCount ?? 0} Cite</td>
+          <td class="actions-cell">
+            <a class="action-link" href="${escapeHtml(paper.url)}" target="_blank" rel="noopener noreferrer">Get PDF</a>
+            <button type="button" aria-label="Bookmark paper">☆</button>
+            <button type="button" aria-label="More options">⋯</button>
+          </td>
+          <td class="relevance-cell">
+            <div class="score-row">
+              <span class="score">${paper.relevanceScore}/100</span>
+              <span class="tag" style="background:${tone.bg};color:${tone.fg};">${escapeHtml(paper.relevanceTag)}</span>
+            </div>
+            <div class="reasoning-label">Reasoning</div>
+            <p class="reasoning-text">${escapeHtml(paper.reasoning)}</p>
+          </td>
+          <td class="abstract-cell">${abstractPreview}</td>
+        </tr>
+      `;
+    })
+    .join("");
+
+  return `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>${escapeHtml(result.refinedQuery)} - Research Dashboard</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f4f7fb;
+        --panel: #ffffff;
+        --line: #e2e7f0;
+        --text: #101522;
+        --muted: #667084;
+        --link: #2158d4;
+        --soft: #f8fbff;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: linear-gradient(180deg, #f8fbff 0%, var(--bg) 100%);
+        color: var(--text);
+        font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      .page {
+        width: min(1480px, calc(100vw - 48px));
+        margin: 24px auto;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: 0 20px 50px rgba(16, 21, 34, 0.07);
+      }
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.94);
+      }
+      .eyebrow {
+        margin: 0;
+        font-size: 12px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: #7d8798;
+        font-weight: 700;
+      }
+      h1 {
+        margin: 8px 0 0;
+        font-size: 30px;
+        line-height: 1.15;
+      }
+      .subtext {
+        margin: 10px 0 0;
+        max-width: 780px;
+        color: var(--muted);
+        font-size: 15px;
+        line-height: 1.7;
+      }
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+      }
+      .toolbar-pill {
+        border: 1px solid var(--line);
+        background: #fff;
+        border-radius: 999px;
+        padding: 10px 14px;
+        font-size: 13px;
+        color: #465266;
+      }
+      .content {
+        padding: 20px 24px 26px;
+      }
+      .summary {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 16px;
+        margin-bottom: 18px;
+      }
+      .summary-card {
+        border: 1px solid var(--line);
+        background: var(--soft);
+        border-radius: 18px;
+        padding: 16px;
+      }
+      .summary-label {
+        font-size: 12px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #7d8798;
+        font-weight: 700;
+      }
+      .summary-card p {
+        margin: 10px 0 0;
+        font-size: 14px;
+        line-height: 1.75;
+        color: #445066;
+      }
+      .table-shell {
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        overflow: hidden;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+      }
+      thead th {
+        background: #f7f9fc;
+        border-bottom: 1px solid var(--line);
+        padding: 14px 12px;
+        text-align: left;
+        font-size: 12px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #667084;
+      }
+      tbody td {
+        border-bottom: 1px solid var(--line);
+        padding: 16px 12px;
+        vertical-align: top;
+        font-size: 14px;
+        line-height: 1.6;
+      }
+      tbody tr:last-child td {
+        border-bottom: 0;
+      }
+      .checkbox-cell { width: 44px; }
+      .paper-cell { width: 28%; }
+      .cite-cell { width: 110px; white-space: nowrap; color: #1d2736; font-weight: 600; }
+      .actions-cell { width: 150px; }
+      .relevance-cell { width: 28%; }
+      .abstract-cell { width: 22%; color: #4c586a; }
+      .paper-link {
+        color: var(--link);
+        font-size: 20px;
+        line-height: 1.35;
+        font-weight: 700;
+        text-decoration: none;
+      }
+      .paper-meta {
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .actions-cell {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .actions-cell button,
+      .action-link {
+        border: 0;
+        background: transparent;
+        padding: 0;
+        color: #1a2433;
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      .score-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .score {
+        font-size: 18px;
+        font-weight: 700;
+        color: #111727;
+      }
+      .tag {
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .reasoning-label {
+        margin-top: 10px;
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #7d8798;
+        font-weight: 700;
+      }
+      .reasoning-text {
+        margin: 6px 0 0;
+        color: #485468;
+      }
+      .more {
+        color: var(--link);
+        font-weight: 600;
+      }
+      @media (max-width: 1200px) {
+        .summary {
+          grid-template-columns: 1fr;
+        }
+        .table-shell {
+          overflow-x: auto;
+        }
+        table {
+          min-width: 1180px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <div class="topbar">
+        <div>
+          <p class="eyebrow">Research paper discovery dashboard</p>
+          <h1>${escapeHtml(result.refinedQuery || result.query)}</h1>
+          <p class="subtext">${escapeHtml(result.searchSummary)}</p>
+        </div>
+        <div class="toolbar">
+          <div class="toolbar-pill">Papers (${result.totalCandidatePapers})</div>
+          <div class="toolbar-pill">Sorted by relevance</div>
+          <div class="toolbar-pill">Model: ${escapeHtml(result.model)}</div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="summary">
+          <div class="summary-card">
+            <div class="summary-label">TL;DR</div>
+            <p>${escapeHtml(result.tldr)}</p>
+          </div>
+          <div class="summary-card">
+            <div class="summary-label">Synthesis cue</div>
+            <p>${escapeHtml(result.synthesisSection.body)}</p>
+          </div>
+        </div>
+
+        <div class="table-shell">
+          <table>
+            <thead>
+              <tr>
+                <th></th>
+                <th>Paper Title</th>
+                <th>Citations</th>
+                <th>Actions</th>
+                <th>Relevance Panel</th>
+                <th>Abstract Preview</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>`;
+}
+
+function triggerTextDownload({
+  filename,
+  content,
+  mimeType = "text/markdown;charset=utf-8",
+}: {
+  filename: string;
+  content: string;
+  mimeType?: string;
+}) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
 }
 
 function ReferenceBadge({
@@ -232,6 +805,53 @@ function CitationBadge({
   onClick?: () => void;
 }) {
   return <ReferenceBadge label={String(pageNumber)} onClick={onClick} />;
+}
+
+function getPaperReferenceNumber(
+  result: DeepResearchResult,
+  paperId: string,
+) {
+  const paperIndex = result.papers.findIndex((paper) => paper.id === paperId);
+  return paperIndex === -1 ? null : paperIndex + 1;
+}
+
+function InlinePaperCitations({
+  result,
+  paperIds,
+  onSelectPaper,
+}: {
+  result: DeepResearchResult;
+  paperIds: string[];
+  onSelectPaper: (paperId: string) => void;
+}) {
+  const uniquePaperIds = Array.from(new Set(paperIds));
+
+  if (uniquePaperIds.length === 0) {
+    return null;
+  }
+
+  return (
+    <span className="ml-2 inline-flex flex-wrap gap-1 align-super">
+      {uniquePaperIds.map((paperId) => {
+        const referenceNumber = getPaperReferenceNumber(result, paperId);
+
+        if (!referenceNumber) {
+          return null;
+        }
+
+        return (
+          <button
+            key={paperId}
+            type="button"
+            onClick={() => onSelectPaper(paperId)}
+            className="inline-flex h-5 min-w-5 items-center justify-center rounded-full border border-[#d8dee8] bg-[#f8fbff] px-1.5 text-[10px] font-semibold text-[#5b6474] transition-colors hover:bg-white"
+          >
+            {referenceNumber}
+          </button>
+        );
+      })}
+    </span>
+  );
 }
 
 function getCitedPages(
@@ -515,11 +1135,7 @@ function ConversationList({
               </div>
               <div className="mt-3 space-y-1 text-[#5a6576]">
                 {pendingRequest.tool === "deep-research" ? (
-                  <>
-                    <p>Searching for related sources</p>
-                    <p>Ranking the most useful papers</p>
-                    <p>Drafting a cited research summary</p>
-                  </>
+                  <DeepResearchPendingTimeline />
                 ) : (
                   <>
                     <p>Finding the most relevant pages</p>
@@ -536,7 +1152,34 @@ function ConversationList({
   );
 }
 
-function DeepResearchThinkingPanel({ prompt }: { prompt: string }) {
+function DeepResearchPendingTimeline() {
+  const activeStageIndex = useStagedThinkingProgress(
+    true,
+    deepResearchThinkingStages.length,
+  );
+
+  return (
+    <DeepResearchStageTimeline activeStageIndex={activeStageIndex} compact />
+  );
+}
+
+function DeepResearchThinkingPanel({
+  prompt,
+}: {
+  prompt: string;
+}) {
+  const activeStageIndex = useStagedThinkingProgress(
+    true,
+    deepResearchThinkingStages.length,
+  );
+  const progressPercent = Math.round(
+    ((activeStageIndex + 1) / deepResearchThinkingStages.length) * 100,
+  );
+
+  const activeStage =
+    deepResearchThinkingStages[activeStageIndex] ??
+    deepResearchThinkingStages[0];
+
   return (
     <div role="status" aria-live="polite" className="space-y-6">
       <div className="rounded-[1.4rem] border border-[#e1e6ef] bg-[#fbfcfe] p-5">
@@ -544,30 +1187,36 @@ function DeepResearchThinkingPanel({ prompt }: { prompt: string }) {
           Deep Research
         </div>
         <h2 className="mt-2 text-[22px] font-semibold tracking-[-0.04em] text-[#111727]">
-          Thinking through your request
+          Running a staged research workflow
         </h2>
         <p className="mt-3 text-[15px] leading-8 text-[#283342]">{prompt}</p>
+        <div className="mt-5 rounded-[1.2rem] border border-[#e3e8f1] bg-white px-4 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7e8795]">
+                Current stage
+              </div>
+              <div className="mt-1 text-sm font-semibold text-[#111727]">
+                {activeStage.label}
+              </div>
+            </div>
+            <div className="rounded-full bg-[#eef3ff] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#2963ff]">
+              {progressPercent}% complete
+            </div>
+          </div>
+          <div className="mt-4 h-2 rounded-full bg-[#ecf0f6]">
+            <div
+              className="h-full rounded-full bg-[#2963ff] transition-[width] duration-700 ease-out"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+          <p className="mt-3 text-sm leading-7 text-[#5a6576]">
+            {activeStage.description}
+          </p>
+        </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        {[
-          "Searching related papers",
-          "Ranking the strongest sources",
-          "Writing a cited synthesis",
-        ].map((step) => (
-          <div
-            key={step}
-            className="rounded-[1.2rem] border border-[#e3e7ee] bg-white p-4 shadow-[0_10px_24px_rgba(16,21,34,0.04)]"
-          >
-            <div className="flex items-center gap-3">
-              <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#5a8bff]" />
-              <div className="text-sm font-medium text-[#111727]">{step}</div>
-            </div>
-            <div className="mt-3 h-2 rounded-full bg-[#eef2f7]" />
-            <div className="mt-2 h-2 w-4/5 rounded-full bg-[#f3f6fa]" />
-          </div>
-        ))}
-      </div>
+      <DeepResearchStageTimeline activeStageIndex={activeStageIndex} />
     </div>
   );
 }
@@ -828,6 +1477,159 @@ function ReportSection({
   );
 }
 
+function DeepResearchSectionBlock({
+  result,
+  section,
+  onSelectPaper,
+}: {
+  result: DeepResearchResult;
+  section: {
+    title: string;
+    body: string;
+    supportingPaperIds: string[];
+  };
+  onSelectPaper: (paperId: string) => void;
+}) {
+  return (
+    <section className="border-b border-[#e8ebf0] pb-7">
+      <h2 className="text-[19px] font-semibold tracking-[-0.03em] text-[#111727]">
+        {section.title}
+      </h2>
+      <p className="mt-3 text-[15px] leading-8 text-[#283342]">
+        {section.body}
+        <InlinePaperCitations
+          result={result}
+          paperIds={section.supportingPaperIds}
+          onSelectPaper={onSelectPaper}
+        />
+      </p>
+      <PaperSourceList
+        result={result}
+        paperIds={section.supportingPaperIds}
+        onSelectPaper={onSelectPaper}
+      />
+    </section>
+  );
+}
+
+function DeepResearchComparisonTable({
+  result,
+  rows,
+  onSelectPaper,
+}: {
+  result: DeepResearchResult;
+  rows: DeepResearchComparisonRow[];
+  onSelectPaper: (paperId: string) => void;
+}) {
+  return (
+    <section className="space-y-4 border-b border-[#e8ebf0] pb-7">
+      <div>
+        <h2 className="text-[19px] font-semibold tracking-[-0.03em] text-[#111727]">
+          Comparative analysis
+        </h2>
+        <p className="mt-3 text-[15px] leading-8 text-[#283342]">
+          The table below compares the main contexts and mechanisms reported across the
+          ranked literature set.
+        </p>
+      </div>
+
+      <div className="overflow-x-auto rounded-[1.2rem] border border-[#e3e7ee]">
+        <table className="min-w-[980px] w-full border-collapse text-left text-sm">
+          <thead className="bg-[#f7f8fb] text-[#111727]">
+            <tr>
+              <th className="border-b border-r border-[#e3e7ee] px-4 py-3 font-semibold">
+                Context / Setting
+              </th>
+              <th className="border-b border-r border-[#e3e7ee] px-4 py-3 font-semibold">
+                Typical Levels / Observations
+              </th>
+              <th className="border-b border-r border-[#e3e7ee] px-4 py-3 font-semibold">
+                Primary Sources
+              </th>
+              <th className="border-b border-[#e3e7ee] px-4 py-3 font-semibold">
+                Dominant Mechanisms
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={`${row.context}-${row.dominantMechanisms.slice(0, 24)}`}>
+                <td className="border-b border-r border-[#e9edf3] px-4 py-4 align-top text-[#111727]">
+                  {row.context}
+                </td>
+                <td className="border-b border-r border-[#e9edf3] px-4 py-4 align-top text-[#455066]">
+                  {row.observations}
+                </td>
+                <td className="border-b border-r border-[#e9edf3] px-4 py-4 align-top">
+                  <div className="flex flex-wrap gap-2">
+                    {row.primarySourceIds.length > 0 ? (
+                      row.primarySourceIds.map((paperId) => {
+                        const referenceNumber = getPaperReferenceNumber(result, paperId);
+
+                        if (!referenceNumber) {
+                          return null;
+                        }
+
+                        return (
+                          <ReferenceBadge
+                            key={`${row.context}-${paperId}`}
+                            label={String(referenceNumber)}
+                            onClick={() => onSelectPaper(paperId)}
+                          />
+                        );
+                      })
+                    ) : (
+                      <span className="text-sm text-[#6d7686]">Insufficient evidence</span>
+                    )}
+                  </div>
+                </td>
+                <td className="border-b border-[#e9edf3] px-4 py-4 align-top text-[#455066]">
+                  {row.dominantMechanisms}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+function DeepResearchReferenceList({
+  result,
+  onSelectPaper,
+}: {
+  result: DeepResearchResult;
+  onSelectPaper: (paperId: string) => void;
+}) {
+  return (
+    <section className="space-y-4 border-b border-[#e8ebf0] pb-7">
+      <h2 className="text-[19px] font-semibold tracking-[-0.03em] text-[#111727]">
+        References
+      </h2>
+      <div className="space-y-4">
+        {result.papers.map((paper, index) => (
+          <div key={paper.id} className="flex gap-3 text-[15px] leading-8 text-[#283342]">
+            <button
+              type="button"
+              onClick={() => onSelectPaper(paper.id)}
+              className="mt-1 inline-flex h-6 min-w-6 items-center justify-center rounded-full border border-[#d8dee8] bg-[#f8fbff] px-1.5 text-[11px] font-semibold text-[#5b6474]"
+            >
+              {index + 1}
+            </button>
+            <p>
+              {paper.authors.length ? paper.authors.join(", ") : "Unknown authors"} (
+              {paper.year}). <span className="font-medium text-[#111727]">{paper.title}</span>.
+              {" "}{paper.venue}.
+              {paper.doi ? ` DOI: ${paper.doi}.` : ""}
+            </p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function DeepResearchPapersTable({
   result,
   focusedPaperId,
@@ -910,6 +1712,18 @@ function DeepResearchPapersTable({
   );
 }
 
+function DeepResearchDashboardPreview({ result }: { result: DeepResearchResult }) {
+  return (
+    <div className="overflow-hidden rounded-[1.4rem] border border-[#dce4f2] bg-white shadow-[0_18px_34px_rgba(16,21,34,0.04)]">
+      <iframe
+        title="Research paper discovery dashboard"
+        srcDoc={buildDeepResearchDashboardHtml(result)}
+        className="min-h-[980px] w-full border-0 bg-white"
+      />
+    </div>
+  );
+}
+
 export function DocumentWorkspaceView({
   workspace,
   initialPrompt = "",
@@ -961,8 +1775,13 @@ export function DocumentWorkspaceView({
           description: "Summary",
         },
         {
+          id: "dashboard" as const,
+          label: renderFileLabel(workspace.document.title, "paper_discovery_dashboard.html"),
+          description: "Dashboard",
+        },
+        {
           id: "evidence" as const,
-          label: renderFileLabel(workspace.document.title, "ranked_papers.txt"),
+          label: renderFileLabel(workspace.document.title, "ranked_papers.md"),
           description: "Citations",
         },
       ]
@@ -974,7 +1793,7 @@ export function DocumentWorkspaceView({
         },
         {
           id: "evidence" as const,
-          label: renderFileLabel(workspace.document.title, "evidence.txt"),
+          label: renderFileLabel(workspace.document.title, "evidence.md"),
           description: "Evidence",
         },
       ];
@@ -1010,10 +1829,24 @@ export function DocumentWorkspaceView({
     hasDeepResearchResult && deepResearchResult
       ? selectedFile === "insights"
         ? buildDeepResearchReportMarkdown(deepResearchResult)
-        : buildDeepResearchPapersMarkdown(deepResearchResult)
+        : selectedFile === "dashboard"
+          ? buildDeepResearchDashboardHtml(deepResearchResult)
+          : buildDeepResearchPapersMarkdown(deepResearchResult)
       : selectedFile === "insights"
         ? buildInsightsMarkdown(workspace)
         : buildEvidenceMarkdown(workspace);
+  const activeDownload = {
+    filename: activeFileLabelForDownload(
+      workspace.document.title,
+      selectedFile,
+      hasDeepResearchResult,
+    ),
+    content: notebookPayload,
+    mimeType:
+      hasDeepResearchResult && selectedFile === "dashboard"
+        ? "text/html;charset=utf-8"
+        : "text/markdown;charset=utf-8",
+  };
 
   function handleSendPrompt() {
     if (!prompt.trim()) {
@@ -1121,11 +1954,24 @@ export function DocumentWorkspaceView({
     });
   }
 
+  function handleDownloadActiveFile() {
+    triggerTextDownload({
+      filename: activeDownload.filename,
+      content: activeDownload.content,
+      mimeType: activeDownload.mimeType,
+    });
+    setHelperMessage(`Downloaded ${activeDownload.filename}.`);
+  }
+
   function handleDownloadBundle() {
     const bundle =
       hasDeepResearchResult && deepResearchResult
         ? [
             buildDeepResearchReportMarkdown(deepResearchResult),
+            "",
+            "-----",
+            "",
+            buildDeepResearchDashboardHtml(deepResearchResult),
             "",
             "-----",
             "",
@@ -1139,13 +1985,11 @@ export function DocumentWorkspaceView({
             buildEvidenceMarkdown(workspace),
           ].join("\n");
 
-    const blob = new Blob([bundle], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `${slugify(workspace.document.title) || "researchforge"}_outputs.txt`;
-    anchor.click();
-    URL.revokeObjectURL(url);
+    triggerTextDownload({
+      filename: `${slugify(workspace.document.title) || "researchforge"}_research_bundle.md`,
+      content: bundle,
+    });
+    setHelperMessage("Downloaded the full research bundle.");
   }
 
   function focusComposerWithPrompt(value: string) {
@@ -1213,9 +2057,11 @@ export function DocumentWorkspaceView({
       ? isDeepResearchSession
         ? "Readable deep-research report"
         : "Simple summary and key takeaways"
-      : isDeepResearchSession
-        ? "Ranked papers and citation notes"
-        : "Grounded evidence from the PDF";
+      : selectedFile === "dashboard"
+        ? "Paper discovery dashboard UI"
+        : isDeepResearchSession
+          ? "Ranked papers and citation notes"
+          : "Grounded evidence from the PDF";
 
   function handleSelectPageSource(pageNumber: number) {
     setSidebarPanel("sources");
@@ -1426,7 +2272,7 @@ export function DocumentWorkspaceView({
                   onClick={handleDownloadBundle}
                   className="inline-flex w-full items-center justify-center rounded-xl border border-[#d7dde7] px-4 py-2.5 text-sm font-medium text-[#111727] transition-colors hover:bg-[#f7f8fb]"
                 >
-                  Download all files
+                  Download research bundle
                 </button>
               </div>
             ) : (
@@ -1527,10 +2373,10 @@ export function DocumentWorkspaceView({
                 ))}
                 <button
                   type="button"
-                  onClick={handleDownloadBundle}
+                  onClick={handleDownloadActiveFile}
                   className="rounded-xl border border-[#d8dee7] px-3 py-2 text-sm text-[#6d7686] transition-colors hover:bg-[#f7f8fb] hover:text-[#111727]"
                 >
-                  Download
+                  Download file
                 </button>
                 <button
                   type="button"
@@ -1568,44 +2414,42 @@ export function DocumentWorkspaceView({
                   </section>
 
                   {deepResearchResult.sections.map((section) => (
-                    <section
+                    <DeepResearchSectionBlock
                       key={section.title}
-                      className="border-b border-[#e8ebf0] pb-7"
-                    >
-                      <h2 className="text-[19px] font-semibold tracking-[-0.03em] text-[#111727]">
-                        {section.title}
-                      </h2>
-                      <p className="mt-3 text-[15px] leading-8 text-[#283342]">
-                        {section.body}
-                      </p>
-                      {section.supportingPaperIds.length > 0 ? (
-                        <div className="mt-4 flex flex-wrap gap-2">
-                          {section.supportingPaperIds.map((paperId) => {
-                            const paperIndex = deepResearchResult.papers.findIndex(
-                              (paper) => paper.id === paperId,
-                            );
-
-                            if (paperIndex === -1) {
-                              return null;
-                            }
-
-                            return (
-                              <ReferenceBadge
-                                key={`${section.title}-${paperId}`}
-                                label={String(paperIndex + 1)}
-                                onClick={() => handleSelectDeepResearchPaper(paperId)}
-                              />
-                            );
-                          })}
-                        </div>
-                      ) : null}
-                      <PaperSourceList
-                        result={deepResearchResult}
-                        paperIds={section.supportingPaperIds}
-                        onSelectPaper={handleSelectDeepResearchPaper}
-                      />
-                    </section>
+                      result={deepResearchResult}
+                      section={section}
+                      onSelectPaper={handleSelectDeepResearchPaper}
+                    />
                   ))}
+
+                  <DeepResearchSectionBlock
+                    result={deepResearchResult}
+                    section={deepResearchResult.mechanismsSection}
+                    onSelectPaper={handleSelectDeepResearchPaper}
+                  />
+
+                  <DeepResearchComparisonTable
+                    result={deepResearchResult}
+                    rows={deepResearchResult.comparisonRows}
+                    onSelectPaper={handleSelectDeepResearchPaper}
+                  />
+
+                  <DeepResearchSectionBlock
+                    result={deepResearchResult}
+                    section={deepResearchResult.synthesisSection}
+                    onSelectPaper={handleSelectDeepResearchPaper}
+                  />
+
+                  <DeepResearchSectionBlock
+                    result={deepResearchResult}
+                    section={deepResearchResult.practicalImplicationsSection}
+                    onSelectPaper={handleSelectDeepResearchPaper}
+                  />
+
+                  <DeepResearchReferenceList
+                    result={deepResearchResult}
+                    onSelectPaper={handleSelectDeepResearchPaper}
+                  />
 
                   <section className="space-y-4">
                     <h2 className="text-[19px] font-semibold tracking-[-0.03em] text-[#111727]">
@@ -1628,6 +2472,8 @@ export function DocumentWorkspaceView({
                     </div>
                   </section>
                 </div>
+              ) : selectedFile === "dashboard" ? (
+                <DeepResearchDashboardPreview result={deepResearchResult} />
               ) : (
                 <DeepResearchPapersTable
                   result={deepResearchResult}

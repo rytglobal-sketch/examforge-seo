@@ -9,6 +9,7 @@ import {
 } from "@/lib/env";
 import { searchLiterature } from "@/lib/research/literature";
 import type {
+  DeepResearchComparisonRow,
   DeepResearchPaper,
   DeepResearchResult,
   DeepResearchRelevanceTag,
@@ -45,7 +46,33 @@ const deepResearchSchema = z.object({
       }),
     )
     .min(2)
+    .max(5),
+  mechanismsSection: z.object({
+    title: z.string(),
+    body: z.string(),
+    supportingPaperIds: z.array(z.string()),
+  }),
+  comparisonRows: z
+    .array(
+      z.object({
+        context: z.string(),
+        observations: z.string(),
+        primarySourceIds: z.array(z.string()),
+        dominantMechanisms: z.string(),
+      }),
+    )
+    .min(2)
     .max(6),
+  synthesisSection: z.object({
+    title: z.string(),
+    body: z.string(),
+    supportingPaperIds: z.array(z.string()),
+  }),
+  practicalImplicationsSection: z.object({
+    title: z.string(),
+    body: z.string(),
+    supportingPaperIds: z.array(z.string()),
+  }),
   rankedPapers: z
     .array(
       z.object({
@@ -210,21 +237,111 @@ function buildFallbackSections(
 
   return [
     {
-      title: "Research direction",
-      body: `${summaryLead} The strongest matching external paper is "${topPaper?.title ?? "the top-ranked paper"}", which should be reviewed first before broadening into adjacent studies.`,
+      title: "Scope of the available literature",
+      body: `${summaryLead} The strongest matching external paper is "${topPaper?.title ?? "the top-ranked paper"}", which should be reviewed first because it anchors the query most directly in the available evidence base.`,
       supportingPaperIds: topPaper ? [topPaper.id] : [],
     },
     {
-      title: "Most relevant evidence",
-      body: `The ranked set suggests that "${topPaper?.title ?? "the first paper"}" and "${secondPaper?.title ?? "the second paper"}" are the best starting points because their titles, abstracts, and venues align most closely with the query.`,
+      title: "Key evidence clusters",
+      body: `The ranked set suggests that "${topPaper?.title ?? "the first paper"}" and "${secondPaper?.title ?? "the second paper"}" are the best starting points because their titles, abstracts, and venues align most closely with the query and provide the clearest foundation for synthesis.`,
       supportingPaperIds: [topPaper?.id, secondPaper?.id].filter(Boolean) as string[],
     },
     {
-      title: "Where to probe for gaps",
-      body: `Compare the methods, populations, and limits reported across "${secondPaper?.title ?? "the second paper"}" and "${thirdPaper?.title ?? "the third paper"}" to identify what still looks under-explained or inconsistent.`,
+      title: "Research gaps and unresolved questions",
+      body: `Compare the methods, populations, and limits reported across "${secondPaper?.title ?? "the second paper"}" and "${thirdPaper?.title ?? "the third paper"}" to identify what still looks under-explained, inconsistent, or geographically narrow in the current evidence base.`,
       supportingPaperIds: [secondPaper?.id, thirdPaper?.id].filter(Boolean) as string[],
     },
   ];
+}
+
+function buildFallbackMechanismsSection(
+  rankedPapers: DeepResearchPaper[],
+): DeepResearchSection {
+  const topPaper = rankedPapers[0];
+  const secondPaper = rankedPapers[1] ?? rankedPapers[0];
+
+  return {
+    title: "Mechanisms and process drivers",
+    body: topPaper && secondPaper
+      ? `Across the highest-ranked papers, the dominant processes appear to be defined by the interaction between system conditions, source inputs, and transport or transformation pathways. In practical terms, "${topPaper.title}" and "${secondPaper.title}" should be read closely to isolate which causal drivers are consistently reported and which remain context-dependent. If a mechanism is not explicitly described in the candidate papers, it should be treated as insufficiently evidenced rather than inferred.`
+      : "Insufficient evidence to describe the dominant mechanisms with confidence from the current candidate papers.",
+    supportingPaperIds: [topPaper?.id, secondPaper?.id].filter(Boolean) as string[],
+  };
+}
+
+function buildFallbackComparisonRows(
+  rankedPapers: DeepResearchPaper[],
+): DeepResearchComparisonRow[] {
+  if (rankedPapers.length === 0) {
+    return [
+      {
+        context: "Direct evidence",
+        observations: "Insufficient evidence to summarize observations from the current search set.",
+        primarySourceIds: [],
+        dominantMechanisms: "Insufficient evidence to identify dominant mechanisms.",
+      },
+      {
+        context: "Comparative context",
+        observations: "Insufficient evidence to compare contexts or settings from the current search set.",
+        primarySourceIds: [],
+        dominantMechanisms: "Insufficient evidence to identify dominant mechanisms.",
+      },
+    ];
+  }
+
+  return rankedPapers.slice(0, 3).map((paper, index) => ({
+    context:
+      index === 0
+        ? "Highest-fit literature"
+        : index === 1
+          ? "Secondary supporting literature"
+          : "Broader contextual literature",
+    observations:
+      paper.abstract
+        ? trimToSentenceCount(paper.abstract, 2)
+        : "Insufficient evidence to summarize observations from the returned metadata alone.",
+    primarySourceIds: [paper.id],
+    dominantMechanisms:
+      "Use the full paper to verify which drivers are explicitly reported; metadata alone is not enough to confirm a mechanism in detail.",
+  }));
+}
+
+function buildFallbackSynthesisSection(
+  rankedPapers: DeepResearchPaper[],
+): DeepResearchSection {
+  const topPaper = rankedPapers[0];
+  const thirdPaper = rankedPapers[2] ?? rankedPapers[1] ?? rankedPapers[0];
+
+  return {
+    title: "Synthesis and key contrasts",
+    body: topPaper && thirdPaper
+      ? `The main contrast in the current evidence base is between papers that directly address the query and papers that only contribute partial contextual support. This means "${topPaper.title}" is likely to be central for the core argument, while "${thirdPaper.title}" may be more useful for comparison, boundary conditions, or identifying uncertainty that still matters in real-world application.`
+      : "Insufficient evidence to synthesize key contrasts across the current ranked papers.",
+    supportingPaperIds: [topPaper?.id, thirdPaper?.id].filter(Boolean) as string[],
+  };
+}
+
+function buildFallbackPracticalImplicationsSection(
+  rankedPapers: DeepResearchPaper[],
+): DeepResearchSection {
+  const topPaper = rankedPapers[0];
+
+  return {
+    title: "Practical implications",
+    body: topPaper
+      ? `A practical next step is to validate the monitoring, intervention, or application strategies described in "${topPaper.title}" against the narrower details of the target context. Decision-making should prioritize directly measured evidence, explicitly reported mechanisms, and any limitations that affect transferability into operational settings.`
+      : "Insufficient evidence to derive practical implications from the current ranked papers.",
+    supportingPaperIds: topPaper ? [topPaper.id] : [],
+  };
+}
+
+function trimToSentenceCount(value: string, maxSentences: number) {
+  const sentences = value
+    .split(/(?<=[.!?])\s+/)
+    .map((sentence) => sentence.trim())
+    .filter(Boolean);
+
+  return sentences.slice(0, maxSentences).join(" ");
 }
 
 function buildFallbackDeepResearch(
@@ -250,6 +367,10 @@ function buildFallbackDeepResearch(
         ? `The strongest starting point is "${rankedPapers[0].title}". Use the top-ranked papers to compare methods, limits, and contradictions before drafting a literature review.`
         : "No strong external papers were found, so refine the query before relying on the current search set.",
     sections: buildFallbackSections(rankedPapers, context),
+    mechanismsSection: buildFallbackMechanismsSection(rankedPapers),
+    comparisonRows: buildFallbackComparisonRows(rankedPapers),
+    synthesisSection: buildFallbackSynthesisSection(rankedPapers),
+    practicalImplicationsSection: buildFallbackPracticalImplicationsSection(rankedPapers),
     papers: rankedPapers,
     relatedQuestions: [
       "Which of these papers gives the clearest methodology I can compare?",
@@ -353,7 +474,7 @@ export async function runDeepResearch(
         {
           role: "system",
           content:
-            "You are ResearchForge Deep Research. Use only the supplied candidate papers and uploaded-document context. Do not invent papers, authors, results, or citations. Rank the papers by relevance to the query, explain relevance plainly, and write clear academic synthesis in simple language. Return valid JSON with keys refinedQuery, searchSummary, tldr, sections, rankedPapers, relatedQuestions.",
+            "You are ResearchForge Deep Research. Use only the supplied candidate papers and uploaded-document context. Do not invent papers, authors, results, citations, mechanisms, datasets, or quantitative claims. Write in a formal scientific tone suitable for a technical briefing or literature review. The output must be dense, evidence-based, highly structured, and free of speculation. If evidence is uncertain, inconsistent, or absent, explicitly say 'Insufficient evidence...' instead of guessing. Return valid JSON with keys refinedQuery, searchSummary, tldr, sections, mechanismsSection, comparisonRows, synthesisSection, practicalImplicationsSection, rankedPapers, relatedQuestions. The 'tldr' must be 2-3 sentences. The 'sections' array should contain 2-5 thematic sections with descriptive academic headings. 'mechanismsSection' must explain underlying scientific or technical drivers in detail. 'comparisonRows' must support a comparative analysis table with columns for context, observations, primary sources, and dominant mechanisms. 'synthesisSection' must highlight contrasts, implications, and real-world significance. 'practicalImplicationsSection' must contain actionable monitoring, recovery, application, or decision-use insights. Every section body must stay grounded in the provided papers only.",
         },
         {
           role: "user",
@@ -379,6 +500,10 @@ export async function runDeepResearch(
       searchSummary: parsed.searchSummary,
       tldr: parsed.tldr,
       sections: parsed.sections,
+      mechanismsSection: parsed.mechanismsSection,
+      comparisonRows: parsed.comparisonRows,
+      synthesisSection: parsed.synthesisSection,
+      practicalImplicationsSection: parsed.practicalImplicationsSection,
       papers,
       relatedQuestions: parsed.relatedQuestions,
     } satisfies DeepResearchResult;
